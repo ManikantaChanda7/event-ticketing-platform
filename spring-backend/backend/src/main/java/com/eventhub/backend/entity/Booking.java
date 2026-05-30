@@ -5,7 +5,6 @@ import lombok.Getter;
 import lombok.Setter;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 
 import com.eventhub.backend.enums.BookingStatus;
 
@@ -13,28 +12,24 @@ import com.eventhub.backend.enums.BookingStatus;
 @Table(name = "bookings")
 @Getter
 @Setter
-public class Booking extends BaseEntity{
+public class Booking extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private LocalDateTime bookingDate = LocalDateTime.now();
+    private Integer quantity;
 
     private BigDecimal totalAmount;
 
     @Enumerated(EnumType.STRING)
-    private BookingStatus status = BookingStatus.PENDING;
+    private BookingStatus status;
 
     @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id")
     private User user;
 
     @ManyToOne
-    @JoinColumn(name = "event_id", nullable = false)
-    private Event event;
-
-    @ManyToOne
-    @JoinColumn(name = "session_id", nullable = false)
-    private Session session;
+    @JoinColumn(name = "ticket_type_id")
+    private TicketType ticketType;
 }
