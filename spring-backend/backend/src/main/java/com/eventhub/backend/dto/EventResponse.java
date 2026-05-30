@@ -1,11 +1,17 @@
 package com.eventhub.backend.dto;
 
-import lombok.Builder;
-import lombok.Getter;
+import java.util.List;
+
+import lombok.*;
 
 @Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class EventResponse {
+
+    private Long _id;
 
     private Long id;
 
@@ -19,7 +25,17 @@ public class EventResponse {
 
     private String status;
 
-    private String organizerName;
+    private Double averageRating;
 
-    private String venueName;
+    private Integer interestedUsers;
+
+    private OrganizerSummaryResponse organizer;
+
+    private LocationResponse location;
+
+    private List<NodeReviewResponse> ratings;
+
+    private Double startingPrice;
+
+    private String thumbnailImage;
 }

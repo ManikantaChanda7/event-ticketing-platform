@@ -10,4 +10,6 @@ public interface SessionRepository
         extends JpaRepository<Session, Long> {
 
     List<Session> findByEvent(Event event);
+
+    long countByEvent(Event event);
 }

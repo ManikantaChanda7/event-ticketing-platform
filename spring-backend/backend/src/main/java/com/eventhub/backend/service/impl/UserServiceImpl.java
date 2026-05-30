@@ -1,62 +1,277 @@
 package com.eventhub.backend.service.impl;
 
+import com.eventhub.backend.dto.ChangePasswordRequest;
+import com.eventhub.backend.dto.ProfileResponse;
 import com.eventhub.backend.dto.RegisterRequest;
+import com.eventhub.backend.dto.UpdateEmailRequest;
+import com.eventhub.backend.dto.UpdateLocationRequest;
+import com.eventhub.backend.dto.UpdateProfileRequest;
 import com.eventhub.backend.entity.User;
 import com.eventhub.backend.enums.Role;
+import com.eventhub.backend.exception.ResourceNotFoundException;
 import com.eventhub.backend.repository.UserRepository;
 import com.eventhub.backend.service.UserService;
 import com.eventhub.backend.util.JwtService;
 
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 @Service
 public class UserServiceImpl implements UserService {
 
-    private final UserRepository userRepository;
+        private final UserRepository userRepository;
 
-    private final JwtService jwtService;
+        private final JwtService jwtService;
 
-    private final PasswordEncoder passwordEncoder;
+        private final PasswordEncoder passwordEncoder;
 
-    public UserServiceImpl(
-            UserRepository userRepository,
-            PasswordEncoder passwordEncoder,
-            JwtService jwtService) {
+        public UserServiceImpl(
+                        UserRepository userRepository,
+                        PasswordEncoder passwordEncoder,
+                        JwtService jwtService) {
 
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.jwtService = jwtService;
-    }
-
-    @Override
-    public User registerUser(RegisterRequest request) {
-
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email already exists");
+                this.userRepository = userRepository;
+                this.passwordEncoder = passwordEncoder;
+                this.jwtService = jwtService;
         }
 
-        User user = new User();
+        @Override
+        public User registerUser(RegisterRequest request) {
 
-        user.setUsername(request.getUsername());
-        user.setEmail(request.getEmail());
-        user.setPassword(
-                passwordEncoder.encode(request.getPassword()));
-        user.setRole(Role.USER);
+                if (userRepository.existsByEmail(request.getEmail())) {
+                        throw new RuntimeException("Email already exists");
+                }
 
-        return userRepository.save(user);
-    }
+                User user = new User();
 
-    @Override
-    public String loginUser(String email, String password) {
+                user.setUsername(request.getUsername());
+                user.setEmail(request.getEmail());
+                user.setPassword(
+                                passwordEncoder.encode(request.getPassword()));
+                user.setRole(Role.USER);
 
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Invalid credentials"));
-
-        if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new RuntimeException("Invalid credentials");
+                return userRepository.save(user);
         }
 
-        return jwtService.generateToken(user.getEmail());
-    }
+        @Override
+        public String loginUser(String email, String password) {
+
+                User user = userRepository.findByEmail(email)
+                                .orElseThrow(() -> new RuntimeException("Invalid credentials"));
+
+                if (!passwordEncoder.matches(password, user.getPassword())) {
+                        throw new RuntimeException("Invalid credentials");
+                }
+
+                return jwtService.generateToken(user.getEmail());
+        }
+
+        @Override
+
+        public ProfileResponse getProfile(
+
+                        String userEmail) {
+
+                User user = userRepository.findByEmail(userEmail)
+
+                                .orElseThrow(() ->
+
+                                new ResourceNotFoundException(
+
+                                                "User not found"));
+
+                return mapToProfileResponse(user);
+
+        }
+
+        @Override
+
+        public ProfileResponse updateProfile(
+
+                        String userEmail,
+
+                        UpdateProfileRequest request) {
+
+                User user = userRepository.findByEmail(userEmail)
+
+                                .orElseThrow(() ->
+
+                                new ResourceNotFoundException(
+
+                                                "User not found"));
+
+                if (request.getUsername() != null) {
+
+                        user.setUsername(request.getUsername());
+
+                }
+
+                if (request.getPhone() != null) {
+
+                        user.setPhone(request.getPhone());
+
+                }
+
+                if (request.getUserProfileImage() != null) {
+
+                        user.setUserProfileImage(
+
+                                        request.getUserProfileImage());
+
+                }
+
+                userRepository.save(user);
+
+                return mapToProfileResponse(user);
+
+        }
+
+        private ProfileResponse mapToProfileResponse(
+
+                        User user) {
+
+                ProfileResponse response =
+
+                                new ProfileResponse();
+
+                response.setId(user.getId());
+
+                response.setUsername(user.getUsername());
+
+                response.setEmail(user.getEmail());
+
+                response.setRole(
+
+                                user.getRole().name());
+
+                response.setPhone(user.getPhone());
+
+                response.setUserProfileImage(
+
+                                user.getUserProfileImage());
+
+                return response;
+
+        }
+
+        @Override
+        public void changePassword(
+                        String userEmail,
+                        ChangePasswordRequest request) {
+
+                User user = userRepository.findByEmail(userEmail)
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "User not found"));
+
+                if (!passwordEncoder.matches(
+                                request.getCurrentPassword(),
+                                user.getPassword())) {
+
+                        throw new RuntimeException(
+                                        "Current password is incorrect");
+                }
+
+                user.setPassword(
+                                passwordEncoder.encode(
+                                                request.getNewPassword()));
+
+                userRepository.save(user);
+        }
+
+        @Override
+        public ProfileResponse updateEmail(
+                        UpdateEmailRequest request) {
+
+                String email = SecurityContextHolder
+                                .getContext()
+                                .getAuthentication()
+                                .getName();
+
+                User user = userRepository
+                                .findByEmail(email)
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "User not found"));
+
+                if (request.getNewEmail() == null
+                                || request.getConfirmEmail() == null) {
+
+                        throw new RuntimeException(
+                                        "Both email fields are required");
+                }
+
+                if (!request.getNewEmail()
+                                .equals(request.getConfirmEmail())) {
+
+                        throw new RuntimeException(
+                                        "Emails do not match");
+                }
+
+                if (userRepository
+                                .findByEmail(request.getNewEmail())
+                                .isPresent()) {
+
+                        throw new RuntimeException(
+                                        "Email already in use");
+                }
+
+                user.setEmail(request.getNewEmail());
+
+                return mapToProfileResponse(
+                                userRepository.save(user));
+        }
+
+        @Override
+        public ProfileResponse updateLocation(
+                        UpdateLocationRequest request) {
+
+                String email = SecurityContextHolder
+                                .getContext()
+                                .getAuthentication()
+                                .getName();
+
+                User user = userRepository
+                                .findByEmail(email)
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "User not found"));
+
+                user.setLatitude(
+                                request.getLatitude());
+
+                user.setLongitude(
+                                request.getLongitude());
+
+                user.setLocationLabel(
+                                request.getLocationLabel());
+
+                return mapToProfileResponse(
+                                userRepository.save(user));
+        }
+
+        @Override
+        public UpdateLocationRequest getLocation() {
+
+                String email = SecurityContextHolder
+                                .getContext()
+                                .getAuthentication()
+                                .getName();
+
+                User user = userRepository
+                                .findByEmail(email)
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "User not found"));
+
+                UpdateLocationRequest response = new UpdateLocationRequest();
+
+                response.setLatitude(
+                                user.getLatitude());
+
+                response.setLongitude(
+                                user.getLongitude());
+
+                response.setLocationLabel(
+                                user.getLocationLabel());
+
+                return response;
+        }
 }

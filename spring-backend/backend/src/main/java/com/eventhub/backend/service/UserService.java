@@ -1,11 +1,38 @@
 package com.eventhub.backend.service;
 
+import com.eventhub.backend.dto.ChangePasswordRequest;
+import com.eventhub.backend.dto.ProfileResponse;
 import com.eventhub.backend.dto.RegisterRequest;
+import com.eventhub.backend.dto.UpdateEmailRequest;
+import com.eventhub.backend.dto.UpdateLocationRequest;
+import com.eventhub.backend.dto.UpdateProfileRequest;
 import com.eventhub.backend.entity.User;
 
 public interface UserService {
 
-    User registerUser(RegisterRequest request);
+        User registerUser(RegisterRequest request);
 
-    String loginUser(String email, String password);
+        String loginUser(String email, String password);
+
+        ProfileResponse getProfile(
+
+                        String userEmail);
+
+        ProfileResponse updateProfile(
+
+                        String userEmail,
+
+                        UpdateProfileRequest request);
+
+        void changePassword(
+                        String userEmail,
+                        ChangePasswordRequest request);
+
+        ProfileResponse updateEmail(
+                        UpdateEmailRequest request);
+
+        ProfileResponse updateLocation(
+                        UpdateLocationRequest request);
+
+        UpdateLocationRequest getLocation();
 }

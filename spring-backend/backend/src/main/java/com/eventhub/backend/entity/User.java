@@ -1,5 +1,8 @@
 package com.eventhub.backend.entity;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import com.eventhub.backend.enums.Role;
 
 import jakarta.persistence.*;
@@ -37,4 +40,8 @@ public class User extends BaseEntity {
     private Double longitude;
 
     private String locationLabel;
+
+    @ManyToMany
+    @JoinTable(name = "user_interested_events", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "event_id"))
+    private Set<Event> interestedEvents = new HashSet<>();
 }
