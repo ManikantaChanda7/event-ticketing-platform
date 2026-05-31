@@ -60,6 +60,23 @@ export const fetchRecommendedEvents = createAsyncThunk(
   }
 );
 
+// Fetch single event by id (full details)
+export const fetchEventById = createAsyncThunk(
+  "event/fetchEventById",
+  async (eventId, { rejectWithValue }) => {
+    try {
+      const response = await api.get(`events/${eventId}`, {
+        withCredentials: true,
+      });
+      return response.data;
+    } catch (err) {
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to load event"
+      );
+    }
+  }
+);
+
 // Fetch single event venue
 export const fetchEventVenue = createAsyncThunk(
   "event/fetchEventVenue",
@@ -558,7 +575,20 @@ export const eventSlice = createSlice({
           state.filteredEvents[key] = data; // store in dynamic key
         }
       })
-      .addCase(fetchUserInterestedEvents.rejected, handleRejected);
+      .addCase(fetchUserInterestedEvents.rejected, handleRejected)
+
+      .addCase(fetchEventById.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchEventById.fulfilled, (state, action) => {
+        state.loading = false;
+        state.selectedEvent = action.payload.data;
+      })
+      .addCase(fetchEventById.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload || "Failed to load event";
+      });
   },
 });
 
