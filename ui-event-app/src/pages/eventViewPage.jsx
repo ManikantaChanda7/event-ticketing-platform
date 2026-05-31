@@ -1,6 +1,6 @@
 import { Bookmark, BookmarkCheck } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import EventGridShow from "../components/eventGridShow";
 
 import { format } from "date-fns";
@@ -9,6 +9,7 @@ import { useDispatch, useSelector } from "react-redux";
 import NoData from "../components/noData";
 import { updateUserInterests } from "../redux/slices/authSlice";
 import {
+  fetchEventById,
   fetchSessionsCount,
   fetchSimilarEvents,
   updateInterestedUsers,
@@ -21,6 +22,7 @@ import { isUserBookedEvent } from "../redux/slices/userSlice";
 export default function Component() {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const { id } = useParams();
 
   const { organizer } = useSelector((state) => state.organizerProfile);
   const { selectedEvent, filteredEvents, selectedEventSessionsAvailable } =
@@ -142,6 +144,14 @@ export default function Component() {
       console.error("Review submit error:", err);
     }
   };
+
+  useEffect(() => {
+    if (!id) return;
+    dispatch(fetchEventById(id))
+      .unwrap()
+      .catch((err) => console.error("Error fetching event", err));
+    window.scrollTo(0, 0);
+  }, [dispatch, id]);
 
   useEffect(() => {
     const fetchSessionCount = async () => {
