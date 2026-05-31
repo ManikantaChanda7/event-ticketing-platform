@@ -109,8 +109,10 @@ export default function Component() {
   };
 
   const formatTime = (timeString) => {
+    if (!timeString) return "";
     // Ensure it's always parsed into a Date
     const date = new Date(`2000-01-01T${timeString}`);
+    if (isNaN(date.getTime())) return "";
     return format(date, "h:mm a"); // → 1:30 PM, 9:00 AM
   };
 
