@@ -1,6 +1,8 @@
 package com.eventhub.backend.entity;
 
+import java.time.LocalDate;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import com.eventhub.backend.enums.EventStatus;
@@ -28,6 +30,8 @@ public class Event extends BaseEntity {
 
     private String bannerImage;
 
+    private String thumbnailImage;
+
     @Enumerated(EnumType.STRING)
     private EventStatus status = EventStatus.DRAFT;
 
@@ -47,4 +51,39 @@ public class Event extends BaseEntity {
 
     @ManyToMany(mappedBy = "interestedEvents")
     private Set<User> interestedUsersList = new HashSet<>();
+
+    // Node.js matching fields
+    private LocalDate startDate;
+
+    private LocalDate endDate;
+
+    private String startTime; // "HH:mm" format
+
+    private String endTime; // "HH:mm" format
+
+    private String recurrence; // "single", "multi-day", "weekly"
+
+    @ElementCollection
+    @CollectionTable(name = "event_selected_weekdays", joinColumns = @JoinColumn(name = "event_id"))
+    @Column(name = "weekday")
+    private Set<String> selectedWeekdays = new HashSet<>();
+
+    private String locationType; // "Point" for GeoJSON
+
+    private Double locationLongitude; // coordinates[0]
+
+    private Double locationLatitude; // coordinates[1]
+
+    private String locationLabel;
+
+    private Integer ageLimit;
+
+    @ElementCollection
+    @CollectionTable(name = "event_languages", joinColumns = @JoinColumn(name = "event_id"))
+    @Column(name = "language")
+    private Set<String> languages = new HashSet<>();
+
+    private Boolean isFeatured = false;
+
+    private Double startingPrice;
 }

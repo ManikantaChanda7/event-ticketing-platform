@@ -1,5 +1,6 @@
 package com.eventhub.backend.controller;
 
+import com.eventhub.backend.dto.ApiResponse;
 import com.eventhub.backend.dto.VenueRequest;
 import com.eventhub.backend.dto.VenueResponse;
 import com.eventhub.backend.service.VenueService;
@@ -19,36 +20,37 @@ public class VenueController {
     }
 
     @PostMapping
-    public VenueResponse createVenue(
+    public ApiResponse<VenueResponse> createVenue(
             @Valid @RequestBody VenueRequest request) {
-
-        return venueService.createVenue(request);
+        VenueResponse response = venueService.createVenue(request);
+        return new ApiResponse<>(true, "Venue created successfully", response);
     }
 
     @GetMapping
-    public List<VenueResponse> getAllVenues() {
-        return venueService.getAllVenues();
+    public ApiResponse<List<VenueResponse>> getAllVenues() {
+        List<VenueResponse> response = venueService.getAllVenues();
+        return new ApiResponse<>(true, "All venues fetched successfully", response);
     }
 
     @GetMapping("/{id}")
-    public VenueResponse getVenueById(
+    public ApiResponse<VenueResponse> getVenueById(
             @PathVariable Long id) {
-
-        return venueService.getVenueById(id);
+        VenueResponse response = venueService.getVenueById(id);
+        return new ApiResponse<>(true, "Venue fetched successfully", response);
     }
 
     @PutMapping("/{id}")
-    public VenueResponse updateVenue(
+    public ApiResponse<VenueResponse> updateVenue(
             @PathVariable Long id,
             @Valid @RequestBody VenueRequest request) {
-
-        return venueService.updateVenue(id, request);
+        VenueResponse response = venueService.updateVenue(id, request);
+        return new ApiResponse<>(true, "Venue updated successfully", response);
     }
 
     @DeleteMapping("/{id}")
-    public void deleteVenue(
+    public ApiResponse<Void> deleteVenue(
             @PathVariable Long id) {
-
         venueService.deleteVenue(id);
+        return new ApiResponse<>(true, "Venue deleted successfully", null);
     }
 }

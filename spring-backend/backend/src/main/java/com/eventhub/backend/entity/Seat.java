@@ -10,13 +10,13 @@ import lombok.Setter;
 @Table(name = "seats")
 @Getter
 @Setter
-public class Seat extends BaseEntity{
+public class Seat extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String seatNumber;
+    private String seatId; // Changed from seatNumber to match Node.js
 
     private String section;
 
@@ -26,4 +26,10 @@ public class Seat extends BaseEntity{
     @ManyToOne
     @JoinColumn(name = "session_id", nullable = false)
     private Session session;
+
+    @ManyToOne
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    private Double price; // Price at booking time
 }

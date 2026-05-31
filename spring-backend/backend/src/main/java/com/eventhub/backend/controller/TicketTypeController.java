@@ -1,5 +1,6 @@
 package com.eventhub.backend.controller;
 
+import com.eventhub.backend.dto.ApiResponse;
 import com.eventhub.backend.dto.TicketTypeRequest;
 import com.eventhub.backend.dto.TicketTypeResponse;
 import com.eventhub.backend.service.TicketTypeService;
@@ -21,30 +22,29 @@ public class TicketTypeController {
     }
 
     @PostMapping
-    public TicketTypeResponse createTicketType(
+    public ApiResponse<TicketTypeResponse> createTicketType(
             @Valid @RequestBody TicketTypeRequest request) {
-
-        return ticketTypeService.createTicketType(request);
+        TicketTypeResponse response = ticketTypeService.createTicketType(request);
+        return new ApiResponse<>(true, "Ticket type created successfully", response);
     }
 
     @GetMapping
-    public List<TicketTypeResponse> getAllTicketTypes() {
-
-        return ticketTypeService.getAllTicketTypes();
+    public ApiResponse<List<TicketTypeResponse>> getAllTicketTypes() {
+        List<TicketTypeResponse> response = ticketTypeService.getAllTicketTypes();
+        return new ApiResponse<>(true, "All ticket types fetched successfully", response);
     }
 
     @GetMapping("/{id}")
-    public TicketTypeResponse getTicketTypeById(
+    public ApiResponse<TicketTypeResponse> getTicketTypeById(
             @PathVariable Long id) {
-
-        return ticketTypeService.getTicketTypeById(id);
+        TicketTypeResponse response = ticketTypeService.getTicketTypeById(id);
+        return new ApiResponse<>(true, "Ticket type fetched successfully", response);
     }
 
     @GetMapping("/session/{sessionId}")
-    public List<TicketTypeResponse> getTicketTypesBySession(
+    public ApiResponse<List<TicketTypeResponse>> getTicketTypesBySession(
             @PathVariable Long sessionId) {
-
-        return ticketTypeService.getTicketTypesBySession(
-                sessionId);
+        List<TicketTypeResponse> response = ticketTypeService.getTicketTypesBySession(sessionId);
+        return new ApiResponse<>(true, "Ticket types by session fetched successfully", response);
     }
 }

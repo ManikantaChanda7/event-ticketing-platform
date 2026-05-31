@@ -1,10 +1,10 @@
 package com.eventhub.backend.controller;
 
+import com.eventhub.backend.dto.ApiResponse;
 import com.eventhub.backend.dto.PaymentRequest;
 import com.eventhub.backend.dto.PaymentResponse;
 import com.eventhub.backend.service.PaymentService;
 import jakarta.validation.Valid;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -20,10 +20,9 @@ public class PaymentController {
     }
 
     @PostMapping("/pay")
-    public ResponseEntity<PaymentResponse> makePayment(
+    public ApiResponse<PaymentResponse> makePayment(
             @Valid @RequestBody PaymentRequest request) {
-
-        return ResponseEntity.ok(
-                paymentService.makePayment(request));
+        PaymentResponse response = paymentService.makePayment(request);
+        return new ApiResponse<>(true, "Payment processed successfully", response);
     }
 }

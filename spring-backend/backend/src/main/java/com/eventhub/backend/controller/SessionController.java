@@ -1,5 +1,6 @@
 package com.eventhub.backend.controller;
 
+import com.eventhub.backend.dto.ApiResponse;
 import com.eventhub.backend.dto.SessionRequest;
 import com.eventhub.backend.dto.SessionResponse;
 import com.eventhub.backend.service.SessionService;
@@ -21,29 +22,29 @@ public class SessionController {
     }
 
     @PostMapping
-    public SessionResponse createSession(
+    public ApiResponse<SessionResponse> createSession(
             @Valid @RequestBody SessionRequest request) {
-
-        return sessionService.createSession(request);
+        SessionResponse response = sessionService.createSession(request);
+        return new ApiResponse<>(true, "Session created successfully", response);
     }
 
     @GetMapping
-    public List<SessionResponse> getAllSessions() {
-
-        return sessionService.getAllSessions();
+    public ApiResponse<List<SessionResponse>> getAllSessions() {
+        List<SessionResponse> response = sessionService.getAllSessions();
+        return new ApiResponse<>(true, "All sessions fetched successfully", response);
     }
 
     @GetMapping("/{id}")
-    public SessionResponse getSessionById(
+    public ApiResponse<SessionResponse> getSessionById(
             @PathVariable Long id) {
-
-        return sessionService.getSessionById(id);
+        SessionResponse response = sessionService.getSessionById(id);
+        return new ApiResponse<>(true, "Session fetched successfully", response);
     }
 
     @GetMapping("/event/{eventId}")
-    public List<SessionResponse> getSessionsByEvent(
+    public ApiResponse<List<SessionResponse>> getSessionsByEvent(
             @PathVariable Long eventId) {
-
-        return sessionService.getSessionsByEvent(eventId);
+        List<SessionResponse> response = sessionService.getSessionsByEvent(eventId);
+        return new ApiResponse<>(true, "Sessions by event fetched successfully", response);
     }
 }

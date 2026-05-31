@@ -13,9 +13,13 @@ public class OrganizerSummaryResponse {
 
     private Long id;
 
-    private String organizationName;
+    private String orgName;
 
-    private Boolean verified;
+    private String orgEmail;
 
-    private String website;
+    private String orgDescription;
+
+    private String organizerProfileImage;
+
+    private String organizerBannerImage;
 }

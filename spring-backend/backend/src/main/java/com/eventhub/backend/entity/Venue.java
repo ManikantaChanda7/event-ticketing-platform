@@ -29,4 +29,7 @@ public class Venue extends BaseEntity {
     private Double latitude;
 
     private Double longitude;
+
+    @Column(columnDefinition = "TEXT")
+    private String seatingLayout; // Added to match Node.js - stores seating layout as JSON
 }

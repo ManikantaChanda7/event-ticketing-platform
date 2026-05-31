@@ -54,7 +54,7 @@ public class ReviewServiceImpl implements ReviewService {
                 review.setUser(user);
                 review.setEvent(event);
                 review.setRating(request.getRating());
-                review.setComment(request.getComment());
+                review.setReview(request.getComment());
 
                 Review savedReview = reviewRepository.save(review);
 
@@ -112,7 +112,7 @@ public class ReviewServiceImpl implements ReviewService {
                                 review.getRating());
 
                 response.setComment(
-                                review.getComment());
+                                review.getReview());
 
                 return response;
         }

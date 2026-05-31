@@ -35,13 +35,16 @@ public class User extends BaseEntity {
 
     private String userProfileImage;
 
-    private Double latitude;
+    // Node.js matching GeoJSON structure for preferredLocation
+    private String preferredLocationType; // "Point"
 
-    private Double longitude;
+    private Double preferredLocationLongitude; // coordinates[0]
 
-    private String locationLabel;
+    private Double preferredLocationLatitude; // coordinates[1]
 
-    @ManyToMany
+    private String preferredLocationLabel;
+
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "user_interested_events", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "event_id"))
     private Set<Event> interestedEvents = new HashSet<>();
 }

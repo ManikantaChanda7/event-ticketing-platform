@@ -9,7 +9,6 @@ import com.eventhub.backend.exception.ResourceNotFoundException;
 import com.eventhub.backend.repository.BookingRepository;
 import com.eventhub.backend.repository.EventRepository;
 import com.eventhub.backend.repository.SessionRepository;
-import com.eventhub.backend.repository.TicketTypeRepository;
 import com.eventhub.backend.repository.UserRepository;
 import com.eventhub.backend.service.BookingService;
 
@@ -25,20 +24,17 @@ import java.util.List;
 public class BookingServiceImpl implements BookingService {
 
         private final BookingRepository bookingRepository;
-        private final TicketTypeRepository ticketTypeRepository;
         private final UserRepository userRepository;
         private final EventRepository eventRepository;
         private final SessionRepository sessionRepository;
 
         public BookingServiceImpl(
                         BookingRepository bookingRepository,
-                        TicketTypeRepository ticketTypeRepository,
                         UserRepository userRepository,
                         EventRepository eventRepository,
                         SessionRepository sessionRepository) {
 
                 this.bookingRepository = bookingRepository;
-                this.ticketTypeRepository = ticketTypeRepository;
                 this.userRepository = userRepository;
                 this.eventRepository = eventRepository;
                 this.sessionRepository = sessionRepository;
@@ -55,35 +51,53 @@ public class BookingServiceImpl implements BookingService {
                 User user = userRepository.findByEmail(email)
                                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-                TicketType ticketType = ticketTypeRepository
-                                .findById(request.getTicketTypeId())
-                                .orElseThrow(() -> new ResourceNotFoundException("Ticket type not found"));
+                Event event = eventRepository.findById(request.getEventId())
+                                .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
 
-                if (ticketType.getRemainingQuantity() < request.getQuantity()) {
-                        throw new RuntimeException("Not enough tickets available");
+                Session session = sessionRepository.findById(request.getSessionId())
+                                .orElseThrow(() -> new ResourceNotFoundException("Session not found"));
+
+                // TODO: Implement booking logic with new structure
+                // Calculate total amount from selected seats
+                BigDecimal totalAmount = BigDecimal.ZERO;
+                for (BookingRequest.SelectedSeat seat : request.getSelectedSeats()) {
+                        totalAmount = totalAmount.add(BigDecimal.valueOf(seat.getPrice()));
                 }
-
-                Session session = ticketType.getSession();
-
-                if (session.getAvailableSeats() < request.getQuantity()) {
-                        throw new RuntimeException("Not enough seats available");
-                }
-
-                BigDecimal totalAmount = ticketType.getPrice()
-                                .multiply(BigDecimal.valueOf(request.getQuantity()));
 
                 Booking booking = new Booking();
                 booking.setUser(user);
-                booking.setTicketType(ticketType);
-                booking.setQuantity(request.getQuantity());
+                booking.setEvent(event);
+                booking.setSession(session);
                 booking.setTotalAmount(totalAmount);
                 booking.setStatus(BookingStatus.CONFIRMED);
 
-                ticketType.setRemainingQuantity(
-                                ticketType.getRemainingQuantity() - request.getQuantity());
+                // Map selected seats to BookedSeat entities
+                List<Booking.BookedSeat> bookedSeats = request.getSelectedSeats().stream()
+                                .map(seat -> new Booking.BookedSeat(seat.getSeatId(), seat.getSection(),
+                                                BigDecimal.valueOf(seat.getPrice())))
+                                .toList();
+                booking.setSeats(bookedSeats);
 
-                session.setAvailableSeats(
-                                session.getAvailableSeats() - request.getQuantity());
+                // Calculate ticketsSummary
+                List<Booking.TicketSummary> ticketSummaries = request.getSelectedSeats().stream()
+                                .collect(java.util.stream.Collectors.groupingBy(
+                                                BookingRequest.SelectedSeat::getSection,
+                                                java.util.stream.Collectors.collectingAndThen(
+                                                                java.util.stream.Collectors.toList(),
+                                                                list -> {
+                                                                        Booking.TicketSummary summary = new Booking.TicketSummary();
+                                                                        summary.setType(list.get(0).getSection());
+                                                                        summary.setQuantity(list.size());
+                                                                        summary.setTotalPrice(BigDecimal.valueOf(list
+                                                                                        .stream()
+                                                                                        .mapToDouble(BookingRequest.SelectedSeat::getPrice)
+                                                                                        .sum()));
+                                                                        return summary;
+                                                                })))
+                                .values()
+                                .stream()
+                                .toList();
+                booking.setTicketsSummary(ticketSummaries);
 
                 booking = bookingRepository.save(booking);
 
@@ -118,7 +132,7 @@ public class BookingServiceImpl implements BookingService {
 
         @Override
         @Transactional
-        public Booking cancelBooking(Long bookingId, String userEmail) {
+        public BookingResponse cancelBooking(Long bookingId, String userEmail) {
 
                 User user = userRepository.findByEmail(userEmail)
                                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
@@ -134,18 +148,14 @@ public class BookingServiceImpl implements BookingService {
                         throw new RuntimeException("Booking already cancelled");
                 }
 
-                TicketType ticketType = booking.getTicketType();
-                Session session = ticketType.getSession();
-
-                ticketType.setRemainingQuantity(
-                                ticketType.getRemainingQuantity() + booking.getQuantity());
-
-                session.setAvailableSeats(
-                                session.getAvailableSeats() + booking.getQuantity());
+                // TODO: Implement cancellation logic with new structure
+                // Restore seats availability
+                // Restore ticket availability
 
                 booking.setStatus(BookingStatus.CANCELLED);
 
-                return bookingRepository.save(booking);
+                Booking savedBooking = bookingRepository.save(booking);
+                return mapToResponse(savedBooking);
         }
 
         @Override
@@ -161,8 +171,9 @@ public class BookingServiceImpl implements BookingService {
                                 .orElseThrow(() -> new ResourceNotFoundException(
                                                 "Event not found"));
 
+                // TODO: Update repository query to use new Booking structure
                 boolean booked = bookingRepository
-                                .existsByUserAndTicketType_Session_Event(
+                                .existsByUserAndEvent(
                                                 user,
                                                 event);
 
@@ -185,25 +196,12 @@ public class BookingServiceImpl implements BookingService {
                                         "Booking already cancelled");
                 }
 
-                TicketType ticketType = booking.getTicketType();
-
-                Session session = ticketType.getSession();
-
-                Integer quantity = booking.getQuantity();
-
-                ticketType.setRemainingQuantity(
-                                ticketType.getRemainingQuantity()
-                                                + quantity);
-
-                session.setAvailableSeats(
-                                session.getAvailableSeats()
-                                                + quantity);
+                // TODO: Implement cancellation logic with new structure
+                // Restore seats availability
+                // Restore ticket availability
 
                 booking.setStatus(
                                 BookingStatus.CANCELLED);
-
-                ticketTypeRepository.save(ticketType);
-                sessionRepository.save(session);
 
                 Booking savedBooking = bookingRepository.save(booking);
 
@@ -212,18 +210,46 @@ public class BookingServiceImpl implements BookingService {
 
         private BookingResponse mapToResponse(Booking booking) {
 
+                // Map seats
+                List<BookingResponse.BookedSeat> bookedSeatsResponse = null;
+                if (booking.getSeats() != null) {
+                        bookedSeatsResponse = booking.getSeats().stream()
+                                        .map(seat -> {
+                                                BookingResponse.BookedSeat bookedSeat = new BookingResponse.BookedSeat();
+                                                bookedSeat.setSeatId(seat.getSeatId());
+                                                bookedSeat.setSection(seat.getSection());
+                                                bookedSeat.setPrice(seat.getPrice());
+                                                return bookedSeat;
+                                        })
+                                        .toList();
+                }
+
+                // Map ticketsSummary
+                List<BookingResponse.TicketSummary> ticketSummariesResponse = null;
+                if (booking.getTicketsSummary() != null) {
+                        ticketSummariesResponse = booking.getTicketsSummary().stream()
+                                        .map(summary -> {
+                                                BookingResponse.TicketSummary ticketSummary = new BookingResponse.TicketSummary();
+                                                ticketSummary.setType(summary.getType());
+                                                ticketSummary.setQuantity(summary.getQuantity());
+                                                ticketSummary.setTotalPrice(summary.getTotalPrice());
+                                                return ticketSummary;
+                                        })
+                                        .toList();
+                }
+
                 return BookingResponse.builder()
+                                ._id(booking.getId())
                                 .id(booking.getId())
-                                .username(booking.getUser().getUsername())
-                                .eventTitle(
-                                                booking.getTicketType()
-                                                                .getSession()
-                                                                .getEvent()
-                                                                .getTitle())
-                                .ticketName(booking.getTicketType().getName())
-                                .quantity(booking.getQuantity())
+                                .user(booking.getUser() != null ? booking.getUser().getId() : null)
+                                .event(booking.getEvent() != null ? booking.getEvent().getId() : null)
+                                .session(booking.getSession() != null ? booking.getSession().getId() : null)
+                                .seats(bookedSeatsResponse)
+                                .ticketsSummary(ticketSummariesResponse)
                                 .totalAmount(booking.getTotalAmount())
-                                .status(booking.getStatus().name())
+                                .status(booking.getStatus() != null ? booking.getStatus().name() : null)
+                                .createdAt(booking.getCreatedAt())
+                                .updatedAt(booking.getUpdatedAt())
                                 .build();
         }
 }

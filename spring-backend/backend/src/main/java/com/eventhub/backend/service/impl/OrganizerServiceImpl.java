@@ -2,6 +2,7 @@ package com.eventhub.backend.service.impl;
 
 import com.eventhub.backend.dto.OrganizerRequest;
 import com.eventhub.backend.dto.OrganizerResponse;
+import com.eventhub.backend.entity.Event;
 import com.eventhub.backend.entity.Organizer;
 import com.eventhub.backend.exception.ResourceNotFoundException;
 import com.eventhub.backend.repository.OrganizerRepository;
@@ -48,14 +49,20 @@ public class OrganizerServiceImpl implements OrganizerService {
                                         "User already has an organizer profile");
                 }
 
-                organizer.setOrganizationName(
+                organizer.setOrgName(
                                 request.getOrganizationName());
 
-                organizer.setWebsite(
-                                request.getWebsite());
+                organizer.setOrgEmail(
+                                request.getOrgEmail());
 
-                organizer.setDescription(
+                organizer.setOrgDescription(
                                 request.getDescription());
+
+                organizer.setOrganizerProfileImage(
+                                request.getOrganizerProfileImage());
+
+                organizer.setOrganizerBannerImage(
+                                request.getOrganizerBannerImage());
 
                 organizer.setUser(user);
 
@@ -90,13 +97,25 @@ public class OrganizerServiceImpl implements OrganizerService {
                         Organizer organizer) {
 
                 return OrganizerResponse.builder()
+                                ._id(organizer.getId())
                                 .id(organizer.getId())
-                                .organizationName(
-                                                organizer.getOrganizationName())
-                                .website(organizer.getWebsite())
-                                .description(
-                                                organizer.getDescription())
-                                .verified(organizer.getVerified())
+                                .user(organizer.getUser() != null ? organizer.getUser().getId() : null)
+                                .phone(organizer.getPhone())
+                                .organizerProfileImage(organizer.getOrganizerProfileImage())
+                                .orgName(organizer.getOrgName())
+                                .orgEmail(organizer.getOrgEmail())
+                                .orgDescription(organizer.getOrgDescription())
+                                .organizerBannerImage(organizer.getOrganizerBannerImage())
+                                .orgSpecialities(organizer.getOrgSpecialities() != null
+                                                ? organizer.getOrgSpecialities().stream().toList()
+                                                : null)
+                                .averageRating(organizer.getAverageRating())
+                                .totalReviews(organizer.getTotalReviews())
+                                .eventsHosted(organizer.getEventsHosted() != null
+                                                ? organizer.getEventsHosted().stream().map(Event::getId).toList()
+                                                : null)
+                                .createdAt(organizer.getCreatedAt())
+                                .updatedAt(organizer.getUpdatedAt())
                                 .build();
         }
 }

@@ -1,6 +1,7 @@
 package com.eventhub.backend.service.impl;
 
 import com.eventhub.backend.dto.ChangePasswordRequest;
+import com.eventhub.backend.dto.LocationResponse;
 import com.eventhub.backend.dto.ProfileResponse;
 import com.eventhub.backend.dto.RegisterRequest;
 import com.eventhub.backend.dto.UpdateEmailRequest;
@@ -16,6 +17,8 @@ import com.eventhub.backend.util.JwtService;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -135,6 +138,7 @@ public class UserServiceImpl implements UserService {
 
                                 new ProfileResponse();
 
+                response.set_id(user.getId());
                 response.setId(user.getId());
 
                 response.setUsername(user.getUsername());
@@ -150,6 +154,24 @@ public class UserServiceImpl implements UserService {
                 response.setUserProfileImage(
 
                                 user.getUserProfileImage());
+
+                response.setIsOAuth(user.getIsOAuth());
+
+                // Map preferred location
+                if (user.getPreferredLocationLatitude() != null
+                                && user.getPreferredLocationLongitude() != null) {
+                        LocationResponse location = new LocationResponse();
+                        location.setType(user.getPreferredLocationType());
+                        location.setLabel(user.getPreferredLocationLabel());
+                        location.setCoordinates(List.of(
+                                        user.getPreferredLocationLongitude(),
+                                        user.getPreferredLocationLatitude()));
+                        response.setPreferredLocation(location);
+                }
+
+                // Map interested events
+                List<Long> interestedEventIds = getUserInterestedEventIds(user.getEmail());
+                response.setInterestedEvents(interestedEventIds);
 
                 return response;
 
@@ -235,13 +257,13 @@ public class UserServiceImpl implements UserService {
                                 .orElseThrow(() -> new ResourceNotFoundException(
                                                 "User not found"));
 
-                user.setLatitude(
+                user.setPreferredLocationLatitude(
                                 request.getLatitude());
 
-                user.setLongitude(
+                user.setPreferredLocationLongitude(
                                 request.getLongitude());
 
-                user.setLocationLabel(
+                user.setPreferredLocationLabel(
                                 request.getLocationLabel());
 
                 return mapToProfileResponse(
@@ -264,14 +286,27 @@ public class UserServiceImpl implements UserService {
                 UpdateLocationRequest response = new UpdateLocationRequest();
 
                 response.setLatitude(
-                                user.getLatitude());
+                                user.getPreferredLocationLatitude());
 
                 response.setLongitude(
-                                user.getLongitude());
+                                user.getPreferredLocationLongitude());
 
                 response.setLocationLabel(
-                                user.getLocationLabel());
+                                user.getPreferredLocationLabel());
 
                 return response;
+        }
+
+        @Override
+        public List<Long> getUserInterestedEventIds(String userEmail) {
+                User user = userRepository
+                                .findByEmailWithInterests(userEmail)
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "User not found"));
+
+                return user.getInterestedEvents()
+                                .stream()
+                                .map(event -> event.getId())
+                                .toList();
         }
 }

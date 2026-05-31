@@ -11,10 +11,10 @@ import lombok.Setter;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class LoginResponse {
+public class RegisterResponse {
 
     private String token;
     private Long userId;
     private String userRole;
-    private List<Long> userInterests;
+    private List<Long> interestedEvents;
 }

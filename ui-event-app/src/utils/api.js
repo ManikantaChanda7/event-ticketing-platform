@@ -10,7 +10,7 @@ export const setStore = (store) => {
 };
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_BACKEND_URL,
+  baseURL: "http://localhost:8080/api",
   headers: { "Content-Type": "application/json" },
 });
 
@@ -72,7 +72,7 @@ api.interceptors.response.use(
     toastRef.current?.error(message);
 
     return Promise.reject(error);
-  }
+  },
 );
 
 export default api;

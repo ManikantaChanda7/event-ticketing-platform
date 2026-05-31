@@ -1,9 +1,13 @@
 package com.eventhub.backend.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
 @Entity
 @Table(name = "reviews")
+@Getter
+@Setter
 public class Review extends BaseEntity {
 
     @Id
@@ -22,41 +26,5 @@ public class Review extends BaseEntity {
     private Integer rating;
 
     @Column(length = 1000)
-    private String comment;
-
-    public Long getId() {
-        return id;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-    public Event getEvent() {
-        return event;
-    }
-
-    public void setEvent(Event event) {
-        this.event = event;
-    }
-
-    public Integer getRating() {
-        return rating;
-    }
-
-    public void setRating(Integer rating) {
-        this.rating = rating;
-    }
-
-    public String getComment() {
-        return comment;
-    }
-
-    public void setComment(String comment) {
-        this.comment = comment;
-    }
+    private String review; // Changed from comment to match Node.js
 }

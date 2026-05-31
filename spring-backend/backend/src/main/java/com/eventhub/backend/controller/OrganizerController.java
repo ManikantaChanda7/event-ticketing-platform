@@ -1,5 +1,6 @@
 package com.eventhub.backend.controller;
 
+import com.eventhub.backend.dto.ApiResponse;
 import com.eventhub.backend.dto.OrganizerRequest;
 import com.eventhub.backend.dto.OrganizerResponse;
 import com.eventhub.backend.service.OrganizerService;
@@ -21,29 +22,28 @@ public class OrganizerController {
     }
 
     @GetMapping("/ping")
-    public String ping() {
-        return "pong";
+    public ApiResponse<String> ping() {
+        return new ApiResponse<>(true, "pong", "pong");
     }
 
     @PostMapping
-    public OrganizerResponse createOrganizer(
+    public ApiResponse<OrganizerResponse> createOrganizer(
             @Valid @RequestBody OrganizerRequest request) {
-
         System.out.println("CREATE ORGANIZER HIT");
-
-        return organizerService.createOrganizer(request);
+        OrganizerResponse response = organizerService.createOrganizer(request);
+        return new ApiResponse<>(true, "Organizer created successfully", response);
     }
 
     @GetMapping
-    public List<OrganizerResponse> getAllOrganizers() {
-
-        return organizerService.getAllOrganizers();
+    public ApiResponse<List<OrganizerResponse>> getAllOrganizers() {
+        List<OrganizerResponse> response = organizerService.getAllOrganizers();
+        return new ApiResponse<>(true, "All organizers fetched successfully", response);
     }
 
     @GetMapping("/{id}")
-    public OrganizerResponse getOrganizerById(
+    public ApiResponse<OrganizerResponse> getOrganizerById(
             @PathVariable Long id) {
-
-        return organizerService.getOrganizerById(id);
+        OrganizerResponse response = organizerService.getOrganizerById(id);
+        return new ApiResponse<>(true, "Organizer fetched successfully", response);
     }
 }

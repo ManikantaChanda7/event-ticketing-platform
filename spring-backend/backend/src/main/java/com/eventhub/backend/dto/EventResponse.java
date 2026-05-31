@@ -1,5 +1,7 @@
 package com.eventhub.backend.dto;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import lombok.*;
@@ -23,6 +25,8 @@ public class EventResponse {
 
     private String bannerImage;
 
+    private String thumbnailImage;
+
     private String status;
 
     private Double averageRating;
@@ -37,5 +41,29 @@ public class EventResponse {
 
     private Double startingPrice;
 
-    private String thumbnailImage;
+    // Node.js matching fields
+    private LocalDate startDate;
+
+    private LocalDate endDate;
+
+    private String startTime; // "HH:mm" format
+
+    private String endTime; // "HH:mm" format
+
+    private String recurrence; // "single", "multi-day", "weekly"
+
+    private List<String> selectedWeekdays;
+
+    private Integer ageLimit;
+
+    private List<String> languages;
+
+    private Boolean isFeatured;
+
+    private LocalDateTime createdAt;
+
+    private LocalDateTime updatedAt;
+
+    // Venue as ID to match Node.js
+    private Long venue;
 }

@@ -9,9 +9,13 @@ import lombok.Setter;
 public class OrganizerRequest {
 
     @NotBlank
-    private String organizationName;
+    private String organizationName; // Keep old name for backward compatibility with request
 
-    private String website;
+    private String orgEmail;
 
-    private String description;
+    private String description; // Keep old name for backward compatibility with request
+
+    private String organizerProfileImage;
+
+    private String organizerBannerImage;
 }

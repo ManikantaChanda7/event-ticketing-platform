@@ -1,12 +1,12 @@
 package com.eventhub.backend.controller;
 
+import com.eventhub.backend.dto.ApiResponse;
 import com.eventhub.backend.dto.ChangePasswordRequest;
 import com.eventhub.backend.dto.ProfileResponse;
 import com.eventhub.backend.dto.UpdateEmailRequest;
 import com.eventhub.backend.dto.UpdateLocationRequest;
 import com.eventhub.backend.dto.UpdateProfileRequest;
 import com.eventhub.backend.service.UserService;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,59 +23,45 @@ public class UserController {
         }
 
         @GetMapping("/profile")
-        public ResponseEntity<ProfileResponse> getProfile(
+        public ApiResponse<ProfileResponse> getProfile(
                         Authentication authentication) {
-
-                return ResponseEntity.ok(
-                                userService.getProfile(
-                                                authentication.getName()));
+                ProfileResponse response = userService.getProfile(authentication.getName());
+                return new ApiResponse<>(true, "Profile fetched successfully", response);
         }
 
         @PutMapping("/profile")
-        public ResponseEntity<ProfileResponse> updateProfile(
+        public ApiResponse<ProfileResponse> updateProfile(
                         Authentication authentication,
                         @RequestBody UpdateProfileRequest request) {
-
-                return ResponseEntity.ok(
-                                userService.updateProfile(
-                                                authentication.getName(),
-                                                request));
+                ProfileResponse response = userService.updateProfile(authentication.getName(), request);
+                return new ApiResponse<>(true, "Profile updated successfully", response);
         }
 
         @PutMapping("/change-password")
-        public ResponseEntity<String> changePassword(
+        public ApiResponse<Void> changePassword(
                         Authentication authentication,
                         @RequestBody ChangePasswordRequest request) {
-
-                userService.changePassword(
-                                authentication.getName(),
-                                request);
-
-                return ResponseEntity.ok(
-                                "Password changed successfully");
+                userService.changePassword(authentication.getName(), request);
+                return new ApiResponse<>(true, "Password changed successfully", null);
         }
 
         @PutMapping("/email")
-        public ResponseEntity<ProfileResponse> updateEmail(
+        public ApiResponse<ProfileResponse> updateEmail(
                         @RequestBody UpdateEmailRequest request) {
-
-                return ResponseEntity.ok(
-                                userService.updateEmail(request));
+                ProfileResponse response = userService.updateEmail(request);
+                return new ApiResponse<>(true, "Email updated successfully", response);
         }
 
         @PutMapping("/location")
-        public ResponseEntity<ProfileResponse> updateLocation(
+        public ApiResponse<ProfileResponse> updateLocation(
                         @RequestBody UpdateLocationRequest request) {
-
-                return ResponseEntity.ok(
-                                userService.updateLocation(
-                                                request));
+                ProfileResponse response = userService.updateLocation(request);
+                return new ApiResponse<>(true, "Location updated successfully", response);
         }
 
         @GetMapping("/location")
-        public ResponseEntity<UpdateLocationRequest> getLocation() {
-
-                return ResponseEntity.ok(
-                                userService.getLocation());
+        public ApiResponse<UpdateLocationRequest> getLocation() {
+                UpdateLocationRequest response = userService.getLocation();
+                return new ApiResponse<>(true, "Location fetched successfully", response);
         }
 }

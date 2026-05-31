@@ -8,6 +8,8 @@ import com.eventhub.backend.dto.UpdateLocationRequest;
 import com.eventhub.backend.dto.UpdateProfileRequest;
 import com.eventhub.backend.entity.User;
 
+import java.util.List;
+
 public interface UserService {
 
         User registerUser(RegisterRequest request);
@@ -35,4 +37,6 @@ public interface UserService {
                         UpdateLocationRequest request);
 
         UpdateLocationRequest getLocation();
+
+        List<Long> getUserInterestedEventIds(String userEmail);
 }

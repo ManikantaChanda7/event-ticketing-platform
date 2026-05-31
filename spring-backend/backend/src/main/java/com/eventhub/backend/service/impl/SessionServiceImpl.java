@@ -16,115 +16,143 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.List;
 
 @Service
 public class SessionServiceImpl implements SessionService {
 
-    private final SessionRepository sessionRepository;
-    private final EventRepository eventRepository;
-    private final UserRepository userRepository;
-    private final OrganizerRepository organizerRepository;
+        private final SessionRepository sessionRepository;
+        private final EventRepository eventRepository;
+        private final UserRepository userRepository;
+        private final OrganizerRepository organizerRepository;
 
-    public SessionServiceImpl(
-            SessionRepository sessionRepository,
-            EventRepository eventRepository,
-            UserRepository userRepository,
-            OrganizerRepository organizerRepository) {
+        public SessionServiceImpl(
+                        SessionRepository sessionRepository,
+                        EventRepository eventRepository,
+                        UserRepository userRepository,
+                        OrganizerRepository organizerRepository) {
 
-        this.sessionRepository = sessionRepository;
-        this.eventRepository = eventRepository;
-        this.userRepository = userRepository;
-        this.organizerRepository = organizerRepository;
-    }
-
-    @Override
-    public SessionResponse createSession(SessionRequest request) {
-
-        String email = SecurityContextHolder
-                .getContext()
-                .getAuthentication()
-                .getName();
-
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
-
-        Organizer organizer = organizerRepository.findByUser(user)
-                .orElseThrow(() -> new ResourceNotFoundException("Organizer not found"));
-
-        Event event = eventRepository.findById(request.getEventId())
-                .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
-
-        if (!event.getOrganizer().getId()
-                .equals(organizer.getId())) {
-
-            throw new RuntimeException(
-                    "You are not allowed to create sessions for this event");
+                this.sessionRepository = sessionRepository;
+                this.eventRepository = eventRepository;
+                this.userRepository = userRepository;
+                this.organizerRepository = organizerRepository;
         }
 
-        Session session = new Session();
+        @Override
+        public SessionResponse createSession(SessionRequest request) {
 
-        session.setEvent(event);
+                String email = SecurityContextHolder
+                                .getContext()
+                                .getAuthentication()
+                                .getName();
 
-        session.setSessionDate(
-                LocalDate.parse(request.getSessionDate()));
+                User user = userRepository.findByEmail(email)
+                                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-        session.setStartTime(
-                LocalTime.parse(request.getStartTime()));
+                Organizer organizer = organizerRepository.findByUser(user)
+                                .orElseThrow(() -> new ResourceNotFoundException("Organizer not found"));
 
-        session.setEndTime(
-                LocalTime.parse(request.getEndTime()));
+                Event event = eventRepository.findById(request.getEventId())
+                                .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
 
-        session.setCapacity(request.getCapacity());
+                if (!event.getOrganizer().getId()
+                                .equals(organizer.getId())) {
 
-        session.setAvailableSeats(request.getCapacity());
+                        throw new RuntimeException(
+                                        "You are not allowed to create sessions for this event");
+                }
 
-        session = sessionRepository.save(session);
+                Session session = new Session();
 
-        return mapToResponse(session);
-    }
+                session.setEvent(event);
 
-    @Override
-    public List<SessionResponse> getAllSessions() {
+                session.setDate(
+                                LocalDate.parse(request.getSessionDate()));
 
-        return sessionRepository.findAll()
-                .stream()
-                .map(this::mapToResponse)
-                .toList();
-    }
+                session.setStartTime(request.getStartTime());
 
-    @Override
-    public SessionResponse getSessionById(Long id) {
+                session.setEndTime(request.getEndTime());
 
-        Session session = sessionRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Session not found"));
+                session = sessionRepository.save(session);
 
-        return mapToResponse(session);
-    }
+                return mapToResponse(session);
+        }
 
-    @Override
-    public List<SessionResponse> getSessionsByEvent(Long eventId) {
+        @Override
+        public List<SessionResponse> getAllSessions() {
 
-        Event event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
+                return sessionRepository.findAll()
+                                .stream()
+                                .map(this::mapToResponse)
+                                .toList();
+        }
 
-        return sessionRepository.findByEvent(event)
-                .stream()
-                .map(this::mapToResponse)
-                .toList();
-    }
+        @Override
+        public SessionResponse getSessionById(Long id) {
 
-    private SessionResponse mapToResponse(Session session) {
+                Session session = sessionRepository.findById(id)
+                                .orElseThrow(() -> new ResourceNotFoundException("Session not found"));
 
-        return SessionResponse.builder()
-                .id(session.getId())
-                .sessionDate(session.getSessionDate().toString())
-                .startTime(session.getStartTime().toString())
-                .endTime(session.getEndTime().toString())
-                .capacity(session.getCapacity())
-                .availableSeats(session.getAvailableSeats())
-                .eventTitle(session.getEvent().getTitle())
-                .build();
-    }
+                return mapToResponse(session);
+        }
+
+        @Override
+        public List<SessionResponse> getSessionsByEvent(Long eventId) {
+
+                Event event = eventRepository.findById(eventId)
+                                .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
+
+                return sessionRepository.findByEvent(event)
+                                .stream()
+                                .map(this::mapToResponse)
+                                .toList();
+        }
+
+        private SessionResponse mapToResponse(Session session) {
+
+                // Map tickets
+                List<SessionResponse.Ticket> ticketResponses = null;
+                if (session.getTickets() != null) {
+                        ticketResponses = session.getTickets().stream()
+                                        .map(ticket -> {
+                                                SessionResponse.Ticket ticketResponse = new SessionResponse.Ticket();
+                                                ticketResponse.setType(ticket.getType());
+                                                ticketResponse.setPrice(ticket.getPrice());
+                                                ticketResponse.setAvailable(ticket.getAvailable());
+                                                ticketResponse.setTotalSeats(ticket.getTotalSeats());
+                                                return ticketResponse;
+                                        })
+                                        .toList();
+                }
+
+                // Map seats
+                List<SessionResponse.SeatInfo> seatInfos = null;
+                if (session.getSeats() != null) {
+                        seatInfos = session.getSeats().stream()
+                                        .map(seat -> {
+                                                SessionResponse.SeatInfo seatInfo = new SessionResponse.SeatInfo();
+                                                seatInfo.setSeatId(seat.getSeatId());
+                                                seatInfo.setSection(seat.getSection());
+                                                seatInfo.setStatus(seat.getStatus() != null ? seat.getStatus().name()
+                                                                : null);
+                                                seatInfo.setUser(
+                                                                seat.getUser() != null ? seat.getUser().getId() : null);
+                                                return seatInfo;
+                                        })
+                                        .toList();
+                }
+
+                return SessionResponse.builder()
+                                ._id(session.getId())
+                                .id(session.getId())
+                                .date(session.getDate())
+                                .startTime(session.getStartTime())
+                                .endTime(session.getEndTime())
+                                .releaseDate(session.getReleaseDate())
+                                .event(session.getEvent() != null ? session.getEvent().getId() : null)
+                                .tickets(ticketResponses)
+                                .seats(seatInfos)
+                                .occupancy(session.getOccupancy())
+                                .build();
+        }
 }

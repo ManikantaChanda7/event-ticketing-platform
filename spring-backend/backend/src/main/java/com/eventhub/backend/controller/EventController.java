@@ -1,5 +1,6 @@
 package com.eventhub.backend.controller;
 
+import com.eventhub.backend.dto.ApiResponse;
 import com.eventhub.backend.dto.EventRequest;
 import com.eventhub.backend.dto.EventResponse;
 import com.eventhub.backend.dto.EventSummaryResponse;
@@ -7,11 +8,9 @@ import com.eventhub.backend.service.EventService;
 import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
 
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/events")
@@ -24,10 +23,10 @@ public class EventController {
         }
 
         @PostMapping
-        public EventResponse createEvent(
+        public ApiResponse<EventResponse> createEvent(
                         @Valid @RequestBody EventRequest request) {
-
-                return eventService.createEvent(request);
+                EventResponse response = eventService.createEvent(request);
+                return new ApiResponse<>(true, "Event created successfully", response);
         }
 
         // @GetMapping
@@ -36,181 +35,134 @@ public class EventController {
         // }
 
         @GetMapping("/{id}")
-        public ResponseEntity<?> getEventById(
+        public ApiResponse<EventResponse> getEventById(
                         @PathVariable Long id) {
-
-                return ResponseEntity.ok(
-                                Map.of(
-                                                "success", true,
-                                                "message", "Event fetched successfully",
-                                                "data", eventService.getEventById(id)));
+                EventResponse response = eventService.getEventById(id);
+                return new ApiResponse<>(true, "Event fetched successfully", response);
         }
 
         @GetMapping("/my-events")
-        public List<EventResponse> getMyEvents() {
-
-                return eventService.getMyEvents();
+        public ApiResponse<List<EventResponse>> getMyEvents() {
+                List<EventResponse> response = eventService.getMyEvents();
+                return new ApiResponse<>(true, "My events fetched successfully", response);
         }
 
         @PutMapping("/{id}")
-        public EventResponse updateEvent(
+        public ApiResponse<EventResponse> updateEvent(
                         @PathVariable Long id,
                         @Valid @RequestBody EventRequest request) {
-
-                return eventService.updateEvent(id, request);
+                EventResponse response = eventService.updateEvent(id, request);
+                return new ApiResponse<>(true, "Event updated successfully", response);
         }
 
         @DeleteMapping("/{id}")
-        public String deleteEvent(
+        public ApiResponse<Void> deleteEvent(
                         @PathVariable Long id) {
-
                 eventService.deleteEvent(id);
-
-                return "Event deleted successfully";
+                return new ApiResponse<>(true, "Event deleted successfully", null);
         }
 
         @GetMapping("/all")
-        public ResponseEntity<List<EventSummaryResponse>> getAllEvents() {
-
-                return ResponseEntity.ok(
-                                eventService.getAllEvents());
+        public ApiResponse<List<EventSummaryResponse>> getAllEvents() {
+                List<EventSummaryResponse> response = eventService.getAllEvents();
+                return new ApiResponse<>(true, "All events fetched successfully", response);
         }
 
         @GetMapping("/category/{category}")
-        public ResponseEntity<List<EventSummaryResponse>> getEventsByCategory(
+        public ApiResponse<List<EventSummaryResponse>> getEventsByCategory(
                         @PathVariable String category) {
-
-                return ResponseEntity.ok(
-                                eventService.getEventsByCategory(
-                                                category));
+                List<EventSummaryResponse> response = eventService.getEventsByCategory(category);
+                return new ApiResponse<>(true, "Events by category fetched successfully", response);
         }
 
         @GetMapping("/search")
-        public ResponseEntity<List<EventSummaryResponse>> searchEvents(
+        public ApiResponse<List<EventSummaryResponse>> searchEvents(
                         @RequestParam String keyword) {
-
-                return ResponseEntity.ok(
-                                eventService.searchEvents(
-                                                keyword));
+                List<EventSummaryResponse> response = eventService.searchEvents(keyword);
+                return new ApiResponse<>(true, "Events searched successfully", response);
         }
 
         @GetMapping("/categories")
-        public ResponseEntity<List<String>> getCategories() {
-                return ResponseEntity.ok(
-                                eventService.getCategories());
+        public ApiResponse<List<String>> getCategories() {
+                List<String> response = eventService.getCategories();
+                return new ApiResponse<>(true, "Categories fetched successfully", response);
         }
 
         @GetMapping("/{eventId}/similarEvents")
-        public ResponseEntity<List<EventSummaryResponse>> getSimilarEvents(
+        public ApiResponse<List<EventSummaryResponse>> getSimilarEvents(
                         @PathVariable Long eventId) {
-
-                return ResponseEntity.ok(
-                                eventService.getSimilarEvents(
-                                                eventId));
+                List<EventSummaryResponse> response = eventService.getSimilarEvents(eventId);
+                return new ApiResponse<>(true, "Similar events fetched successfully", response);
         }
 
         @GetMapping("/recommendedEvents")
-        public ResponseEntity<?> getRecommendedEvents() {
-
-                return ResponseEntity.ok(
-                                Map.of(
-                                                "success", true,
-                                                "data",
-                                                eventService.getRecommendedEvents()));
+        public ApiResponse<List<EventSummaryResponse>> getRecommendedEvents() {
+                List<EventSummaryResponse> response = eventService.getRecommendedEvents();
+                return new ApiResponse<>(true, "Recommended events fetched successfully", response);
         }
 
         @PostMapping("/{eventId}/interest")
-        public ResponseEntity<String> markInterest(
+        public ApiResponse<Void> markInterest(
                         @PathVariable Long eventId,
                         Authentication authentication) {
-
-                eventService.markInterest(
-                                eventId,
-                                authentication.getName());
-
-                return ResponseEntity.ok(
-                                "Interest added");
+                eventService.markInterest(eventId, authentication.getName());
+                return new ApiResponse<>(true, "Interest added successfully", null);
         }
 
         @DeleteMapping("/{eventId}/interest")
-        public ResponseEntity<String> removeInterest(
+        public ApiResponse<Void> removeInterest(
                         @PathVariable Long eventId,
                         Authentication authentication) {
-
-                eventService.removeInterest(
-                                eventId,
-                                authentication.getName());
-
-                return ResponseEntity.ok(
-                                "Interest removed");
+                eventService.removeInterest(eventId, authentication.getName());
+                return new ApiResponse<>(true, "Interest removed successfully", null);
         }
 
         @GetMapping("/trendingEvents")
-        public ResponseEntity<?> getTrendingEvents() {
-
-                return ResponseEntity.ok(
-                                Map.of(
-                                                "success", true,
-                                                "data", eventService.getTrendingEvents()));
+        public ApiResponse<List<EventSummaryResponse>> getTrendingEvents() {
+                List<EventSummaryResponse> response = eventService.getTrendingEvents();
+                return new ApiResponse<>(true, "Trending events fetched successfully", response);
         }
 
         @GetMapping("/popularEvents")
-        public ResponseEntity<?> getPopularEvents() {
-
-                return ResponseEntity.ok(
-                                Map.of(
-                                                "success", true,
-                                                "data", eventService.getPopularEvents()));
+        public ApiResponse<List<EventSummaryResponse>> getPopularEvents() {
+                List<EventSummaryResponse> response = eventService.getPopularEvents();
+                return new ApiResponse<>(true, "Popular events fetched successfully", response);
         }
 
         @GetMapping("/user/interests")
-        public ResponseEntity<List<EventSummaryResponse>> getMyInterestedEvents() {
-
-                return ResponseEntity.ok(
-                                eventService.getMyInterestedEvents());
+        public ApiResponse<List<EventSummaryResponse>> getMyInterestedEvents() {
+                List<EventSummaryResponse> response = eventService.getMyInterestedEvents();
+                return new ApiResponse<>(true, "My interested events fetched successfully", response);
         }
 
         @GetMapping("/{eventId}/interest-status")
-        public ResponseEntity<Boolean> isInterested(
+        public ApiResponse<Boolean> isInterested(
                         @PathVariable Long eventId,
                         Authentication authentication) {
-
-                return ResponseEntity.ok(
-                                eventService.isInterested(
-                                                eventId,
-                                                authentication.getName()));
+                Boolean response = eventService.isInterested(eventId, authentication.getName());
+                return new ApiResponse<>(true, "Interest status fetched successfully", response);
         }
 
         @GetMapping("/{eventId}/sessionsCount")
-        public ResponseEntity<Long> getSessionsCount(
+        public ApiResponse<Long> getSessionsCount(
                         @PathVariable Long eventId) {
-
-                return ResponseEntity.ok(
-                                eventService.getSessionsCount(eventId));
+                Long response = eventService.getSessionsCount(eventId);
+                return new ApiResponse<>(true, "Sessions count fetched successfully", response);
         }
 
         @GetMapping("/organizer/{organizerId}")
-        public ResponseEntity<List<EventSummaryResponse>> getEventsByOrganizer(
+        public ApiResponse<List<EventSummaryResponse>> getEventsByOrganizer(
                         @PathVariable Long organizerId) {
-
-                return ResponseEntity.ok(
-                                eventService.getEventsByOrganizer(
-                                                organizerId));
+                List<EventSummaryResponse> response = eventService.getEventsByOrganizer(organizerId);
+                return new ApiResponse<>(true, "Events by organizer fetched successfully", response);
         }
 
         @GetMapping("/filtered")
-        public ResponseEntity<List<EventSummaryResponse>> filterEvents(
-
+        public ApiResponse<List<EventSummaryResponse>> filterEvents(
                         @RequestParam(required = false) String category,
-
                         @RequestParam(required = false) String city,
-
                         @RequestParam(required = false) String keyword) {
-
-                return ResponseEntity.ok(
-                                eventService.filterEvents(
-                                                category,
-                                                city,
-                                                keyword));
+                List<EventSummaryResponse> response = eventService.filterEvents(category, city, keyword);
+                return new ApiResponse<>(true, "Filtered events fetched successfully", response);
         }
 }

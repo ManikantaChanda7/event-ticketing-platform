@@ -7,7 +7,6 @@ import com.eventhub.backend.dto.EventScore;
 import com.eventhub.backend.dto.EventSummaryResponse;
 import com.eventhub.backend.dto.LocationResponse;
 import com.eventhub.backend.dto.OrganizerSummaryResponse;
-import com.eventhub.backend.entity.Booking;
 import com.eventhub.backend.entity.Event;
 import com.eventhub.backend.entity.Organizer;
 import com.eventhub.backend.entity.User;
@@ -192,7 +191,7 @@ public class EventServiceImpl implements EventService {
                                 .getName();
 
                 User user = userRepository
-                                .findByEmail(email)
+                                .findByEmailWithInterests(email)
                                 .orElseThrow(() -> new ResourceNotFoundException(
                                                 "User not found"));
 
@@ -200,8 +199,8 @@ public class EventServiceImpl implements EventService {
 
                 if (interestedEvents == null
                                 || interestedEvents.isEmpty()) {
-
-                        return List.of();
+                        // Return trending events as fallback for users with no interests
+                        return getTrendingEvents();
                 }
 
                 List<Long> interactedEventIds = interestedEvents.stream()
@@ -218,10 +217,12 @@ public class EventServiceImpl implements EventService {
                                 .distinct()
                                 .toList();
 
-                return eventRepository.findAll()
-                                .stream()
-                                .filter(event -> event.getStatus() == EventStatus.PUBLISHED)
+                System.out.println("Interacted event IDs: " + interactedEventIds);
+                System.out.println("Categories: " + categories);
+                System.out.println("Organizer IDs: " + organizerIds);
 
+                List<EventSummaryResponse> recommended = eventRepository.findAll()
+                                .stream()
                                 .filter(event -> !interactedEventIds.contains(
                                                 event.getId()))
 
@@ -243,6 +244,8 @@ public class EventServiceImpl implements EventService {
 
                                 .map(this::mapToSummary)
                                 .toList();
+
+                return recommended;
         }
 
         @Override
@@ -404,9 +407,13 @@ public class EventServiceImpl implements EventService {
                 response.setThumbnailImage(
                                 event.getBannerImage()); // temporary
 
-                response.setStartingPrice(0.0); // temporary
+                response.setStartingPrice(event.getStartingPrice() != null
+                                ? event.getStartingPrice()
+                                : 0.0);
 
-                response.setRecurrence("ONCE"); // temporary
+                response.setRecurrence(event.getRecurrence() != null
+                                ? event.getRecurrence()
+                                : "ONCE");
                 LocationResponse location = new LocationResponse();
 
                 location.setLabel(
@@ -416,6 +423,7 @@ public class EventServiceImpl implements EventService {
                                 List.of(
                                                 event.getVenue().getLongitude(),
                                                 event.getVenue().getLatitude()));
+                location.setType("Point");
                 response.setAverageRating(
                                 event.getAverageRating() == null
                                                 ? 0.0
@@ -427,9 +435,15 @@ public class EventServiceImpl implements EventService {
                                                 : event.getInterestedUsers());
 
                 response.setLocation(location);
-                response.setStartDate(null);
-                response.setEndDate(null);
-                response.setStartTime(null);
+                response.setStartDate(event.getStartDate() != null
+                                ? event.getStartDate().toString()
+                                : null);
+                response.setEndDate(event.getEndDate() != null
+                                ? event.getEndDate().toString()
+                                : null);
+                response.setStartTime(event.getStartTime() != null
+                                ? event.getStartTime().toString()
+                                : null);
 
                 return response;
         }
@@ -439,7 +453,6 @@ public class EventServiceImpl implements EventService {
 
                 List<EventScore> scores = eventRepository.findAll()
                                 .stream()
-                                .filter(event -> event.getStatus() == EventStatus.PUBLISHED)
                                 .map(event -> {
 
                                         Long ticketsSold = bookingRepository
@@ -491,12 +504,11 @@ public class EventServiceImpl implements EventService {
                                 .orElseThrow(() -> new ResourceNotFoundException(
                                                 "User not found"));
 
-                if (user.getLatitude() == null
-                                || user.getLongitude() == null) {
+                if (user.getPreferredLocationLatitude() == null
+                                || user.getPreferredLocationLongitude() == null) {
 
                         return eventRepository.findAll()
                                         .stream()
-                                        .filter(event -> event.getStatus() == EventStatus.PUBLISHED)
                                         .sorted(
                                                         Comparator
                                                                         .comparing(
@@ -516,15 +528,14 @@ public class EventServiceImpl implements EventService {
 
                 return eventRepository.findAll()
                                 .stream()
-                                .filter(event -> event.getStatus() == EventStatus.PUBLISHED)
                                 .filter(event -> event.getVenue() != null
                                                 && event.getVenue().getLatitude() != null
                                                 && event.getVenue().getLongitude() != null)
                                 .filter(event -> {
 
                                         double distance = calculateDistance(
-                                                        user.getLatitude(),
-                                                        user.getLongitude(),
+                                                        user.getPreferredLocationLatitude(),
+                                                        user.getPreferredLocationLongitude(),
                                                         event.getVenue().getLatitude(),
                                                         event.getVenue().getLongitude());
 
@@ -655,19 +666,20 @@ public class EventServiceImpl implements EventService {
                                 List.of(
                                                 event.getVenue().getLongitude(),
                                                 event.getVenue().getLatitude()));
+                location.setType("Point");
 
                 OrganizerSummaryResponse organizerResponse = OrganizerSummaryResponse.builder()
                                 ._id(event.getOrganizer().getId())
                                 .id(event.getOrganizer().getId())
-                                .organizationName(
+                                .orgName(
                                                 event.getOrganizer()
-                                                                .getOrganizationName())
-                                .verified(
+                                                                .getOrgName())
+                                .orgEmail(
                                                 event.getOrganizer()
-                                                                .getVerified())
-                                .website(
+                                                                .getOrgEmail())
+                                .orgDescription(
                                                 event.getOrganizer()
-                                                                .getWebsite())
+                                                                .getOrgDescription())
                                 .build();
 
                 return EventResponse.builder()
@@ -679,7 +691,7 @@ public class EventServiceImpl implements EventService {
                                 .bannerImage(event.getBannerImage())
                                 .status(event.getStatus() != null ? event.getStatus().name() : null)
                                 .organizer(organizerResponse)
-
+                                .venue(event.getVenue().getId())
                                 .averageRating(
                                                 event.getAverageRating())
 
@@ -687,8 +699,12 @@ public class EventServiceImpl implements EventService {
                                                 event.getInterestedUsers())
                                 .location(location)
                                 .ratings(List.of())
-                                .startingPrice(0.0)
-
+                                .startingPrice(event.getStartingPrice() != null ? event.getStartingPrice() : 0.0)
+                                .startDate(event.getStartDate())
+                                .endDate(event.getEndDate())
+                                .startTime(event.getStartTime())
+                                .endTime(event.getEndTime())
+                                .recurrence(event.getRecurrence())
                                 .thumbnailImage(
                                                 event.getBannerImage())
                                 .build();
