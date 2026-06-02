@@ -133,8 +133,15 @@ public class SessionServiceImpl implements SessionService {
                                                 SessionResponse.SeatInfo seatInfo = new SessionResponse.SeatInfo();
                                                 seatInfo.setSeatId(seat.getSeatId());
                                                 seatInfo.setSection(seat.getSection());
-                                                seatInfo.setStatus(seat.getStatus() != null ? seat.getStatus().name()
-                                                                : null);
+                                                // Convert enum to lowercase string to match frontend expectations
+                                                String status = seat.getStatus() != null
+                                                                ? seat.getStatus().name().toLowerCase()
+                                                                : "available";
+                                                // Map LOCKED to blocked for frontend
+                                                if ("locked".equals(status)) {
+                                                        status = "blocked";
+                                                }
+                                                seatInfo.setStatus(status);
                                                 seatInfo.setUser(
                                                                 seat.getUser() != null ? seat.getUser().getId() : null);
                                                 return seatInfo;

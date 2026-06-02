@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useToast } from "./toastProvider";
 import {
@@ -23,6 +23,30 @@ import { clearOrgStatus } from "../redux/slices/organizerProfileSlice";
 export default function ToastListener() {
   const dispatch = useDispatch();
   const toast = useToast();
+
+  // Track previous loading states to detect transitions (true -> false)
+  const prevLoadingStates = useRef({
+    reviewLoader: false,
+    bookingsLoading: false,
+    updateTitleLoading: false,
+    updateSessionLoading: false,
+    deleteSessionLoading: false,
+    updateImageLoading: false,
+  });
+
+  // Track if review success toast has been shown to prevent duplicate toasts
+  const reviewSuccessShown = useRef(false);
+
+  // Reset stale review states on mount to prevent toasts from previous navigations
+  useEffect(() => {
+    if (reviewSuccess) {
+      dispatch(setReviewSuccessStatus(false));
+    }
+    if (reviewLoader) {
+      // Reset loader if it's stuck in loading state
+      dispatch({ type: "event/writeReview/fulfilled" });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Collect all slice states here
   const {
@@ -216,12 +240,19 @@ export default function ToastListener() {
       onSuccess: () => dispatch(setUpdateImageSuccessStatus(false)),
     },
     {
-      loading: reviewLoader,
+      loading: false, // Don't show loading toast for reviews (submission is quick)
       error: reviewError,
-      success: reviewSuccess,
+      success:
+        reviewSuccess &&
+        !reviewLoader &&
+        prevLoadingStates.current.reviewLoader === true &&
+        !reviewSuccessShown.current,
       loadingMessage: "Submitting review...",
       successMessage: "Review submitted!",
-      onSuccess: () => dispatch(setReviewSuccessStatus(false)),
+      onSuccess: () => {
+        reviewSuccessShown.current = true;
+        dispatch(setReviewSuccessStatus(false));
+      },
     },
     {
       loading: updateSessionLoading,
@@ -257,6 +288,32 @@ export default function ToastListener() {
     },
   ];
 
+  // Update previous loading states after each render
+  useEffect(() => {
+    prevLoadingStates.current = {
+      reviewLoader,
+      bookingsLoading,
+      updateTitleLoading,
+      updateSessionLoading,
+      deleteSessionLoading,
+      updateImageLoading,
+    };
+  }, [
+    reviewLoader,
+    bookingsLoading,
+    updateTitleLoading,
+    updateSessionLoading,
+    deleteSessionLoading,
+    updateImageLoading,
+  ]);
+
+  // Reset review success shown flag when review success changes to false
+  useEffect(() => {
+    if (!reviewSuccess) {
+      reviewSuccessShown.current = false;
+    }
+  }, [reviewSuccess]);
+
   // Loop & trigger toast automatically
   useEffect(() => {
     toastRules.forEach((rule) => {
@@ -267,7 +324,54 @@ export default function ToastListener() {
         if (rule.onSuccess) rule.onSuccess();
       }
     });
-  }, [JSON.stringify(toastRules)]); // react to changes in any rule
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    reviewLoader,
+    reviewError,
+    reviewSuccess,
+    bookingsLoading,
+    bookingsError,
+    bookingsSuccess,
+    updateTitleLoading,
+    updateTitleError,
+    updateTitleSuccess,
+    updateSessionLoading,
+    updateSessionError,
+    updateSessionSuccess,
+    deleteSessionLoading,
+    deleteSessionError,
+    deleteSessionSuccess,
+    updateImageLoading,
+    updateImageError,
+    updateImageSuccess,
+    createEventLoading,
+    createEventError,
+    createEventSuccess,
+    updateRoleLoading,
+    updateRoleError,
+    updateRoleSuccess,
+    updateEmailLoading,
+    updateEmailError,
+    updateEmailSuccess,
+    updatePasswordLoading,
+    updatePasswordError,
+    updatePasswordSuccess,
+    updateProfileLoading,
+    updateProfileError,
+    updateProfileSuccess,
+    updateOrgLoading,
+    updateOrgError,
+    updateOrgSuccess,
+    interestsLoading,
+    interestsError,
+    interestsSuccess,
+    searchEventsLoading,
+    searchEventsError,
+    searchEventsSuccess,
+    filtersApplied,
+    uploadLoading,
+    uploadError,
+  ]); // react to changes in any rule
 
   return null;
 }

@@ -3,6 +3,9 @@ package com.eventhub.backend.dto;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.util.List;
+import java.util.Map;
+
 @Getter
 @Builder
 public class VenueResponse {
@@ -16,4 +19,5 @@ public class VenueResponse {
     private Integer capacity;
     private Double latitude;
     private Double longitude;
+    private List<Map<String, Object>> seatingLayout;
 }

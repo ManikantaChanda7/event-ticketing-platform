@@ -309,4 +309,12 @@ public class UserServiceImpl implements UserService {
                                 .map(event -> event.getId())
                                 .toList();
         }
+
+        @Override
+        public ProfileResponse updateInterests(Long userId) {
+                User user = userRepository.findById(userId)
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                "User not found"));
+                return mapToProfileResponse(user);
+        }
 }

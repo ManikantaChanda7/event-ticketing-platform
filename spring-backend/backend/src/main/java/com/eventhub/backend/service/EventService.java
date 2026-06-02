@@ -3,7 +3,9 @@ package com.eventhub.backend.service;
 import com.eventhub.backend.dto.EventRequest;
 import com.eventhub.backend.dto.EventResponse;
 import com.eventhub.backend.dto.EventSummaryResponse;
+import com.eventhub.backend.dto.PaginatedResponse;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface EventService {
@@ -47,7 +49,7 @@ public interface EventService {
 
         List<EventSummaryResponse> getPopularEvents();
 
-        List<EventSummaryResponse> getMyInterestedEvents();
+        PaginatedResponse<EventSummaryResponse> getMyInterestedEvents(Integer page, Integer limit, String status);
 
         boolean isInterested(
                         Long eventId,
@@ -55,11 +57,23 @@ public interface EventService {
 
         long getSessionsCount(Long eventId);
 
-        List<EventSummaryResponse> getEventsByOrganizer(Long organizerId);
+        PaginatedResponse<EventSummaryResponse> getEventsByOrganizer(Long organizerId, Integer page, Integer limit);
 
-        List<EventSummaryResponse> filterEvents(
-                        String category,
+        PaginatedResponse<EventSummaryResponse> filterEvents(
+                        List<String> categories,
                         String city,
-                        String keyword);
+                        String keyword,
+                        Boolean isFeatured,
+                        Boolean location,
+                        Integer page,
+                        Integer limit,
+                        String recurrence,
+                        Double minRating,
+                        LocalDate startDate,
+                        LocalDate endDate,
+                        List<String> languages,
+                        Integer ageLimit,
+                        String startTime,
+                        String endTime);
 
 }

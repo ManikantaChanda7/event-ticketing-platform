@@ -60,7 +60,10 @@ export default function Login() {
   useEffect(() => {
     if (isAuthenticated) {
       const role = localStorage.getItem("role");
-      navigate(role === "organizer" ? "/dashboard" : "/home");
+      console.log("Role from localStorage:", role);
+      navigate(
+        role === "organizer" || role === "ORGANIZER" ? "/dashboard" : "/home",
+      );
     }
   }, [isAuthenticated, navigate]);
 

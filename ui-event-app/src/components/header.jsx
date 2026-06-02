@@ -22,7 +22,7 @@ const Header = () => {
   const accountRef = useRef(null);
   const accountMenuRef = useRef(null);
 
-  const role = localStorage.getItem("role");
+  const role = localStorage.getItem("role")?.toLowerCase();
   const tabs = [
     { label: "Home", to: "/home" },
     { label: "Interests", to: "/interests" },
@@ -62,9 +62,10 @@ const Header = () => {
     if (userLocation) {
       const loc = userLocation;
 
-      if (loc && loc.label) {
-        setSelectedLocation(loc.label);
-        const [city, state] = loc.label.split(", ");
+      if (loc && (loc.label || loc.locationLabel)) {
+        const label = loc.label || loc.locationLabel;
+        setSelectedLocation(label);
+        const [city, state] = label.split(", ");
         setSelectedCity(city || "City");
         setSelectedState(state || "State");
       }
@@ -110,7 +111,7 @@ const Header = () => {
 
             {role === "user" && (
               <button
-                className="hidden lg:flex items-center gap-3 bg-transparent font-medium text-gray-700 rounded cursor-pointer"
+                className="flex items-center gap-3 bg-transparent font-medium text-gray-700 rounded cursor-pointer"
                 onClick={() => setIsLocationOpen(!isLocationOpen)}
               >
                 {/* Left: Location icon */}
@@ -140,7 +141,7 @@ const Header = () => {
 
           {/* MIDDLE: Tabs (desktop only) */}
           {role === "user" && (
-            <nav className="hidden lg:flex px-10 gap-5">
+            <nav className="hidden md:flex px-10 gap-5">
               {tabs.map((tab) => (
                 <Link
                   key={tab.to}
@@ -191,7 +192,7 @@ const Header = () => {
             {role === "user" && (
               <Link
                 to="/search"
-                className="hidden lg:flex items-center gap-2 border border-gray-300 px-3 py-2 rounded-lg w-64 cursor-pointer"
+                className="hidden md:flex items-center gap-2 border border-gray-300 px-3 py-2 rounded-lg w-64 cursor-pointer"
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"

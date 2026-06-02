@@ -1,8 +1,10 @@
 package com.eventhub.backend.service.impl;
 
 import com.eventhub.backend.dto.EventRatingResponse;
+import com.eventhub.backend.dto.NodeReviewResponse;
 import com.eventhub.backend.dto.ReviewRequest;
 import com.eventhub.backend.dto.ReviewResponse;
+import com.eventhub.backend.dto.ReviewUserResponse;
 import com.eventhub.backend.entity.Event;
 import com.eventhub.backend.entity.Review;
 import com.eventhub.backend.entity.User;
@@ -69,13 +71,13 @@ public class ReviewServiceImpl implements ReviewService {
         }
 
         @Override
-        public List<ReviewResponse> getEventReviews(Long eventId) {
+        public List<NodeReviewResponse> getEventReviews(Long eventId) {
 
                 Event event = eventRepository.findById(eventId)
                                 .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
 
                 return reviewRepository.findByEvent(event).stream()
-                                .map(this::mapToResponse)
+                                .map(this::mapToNodeResponse)
                                 .collect(Collectors.toList());
         }
 
@@ -113,6 +115,24 @@ public class ReviewServiceImpl implements ReviewService {
 
                 response.setComment(
                                 review.getReview());
+
+                return response;
+        }
+
+        private NodeReviewResponse mapToNodeResponse(
+                        Review review) {
+
+                ReviewUserResponse userResponse = new ReviewUserResponse(
+                                review.getUser().getId(),
+                                review.getUser().getUsername(),
+                                review.getUser().getUserProfileImage());
+
+                NodeReviewResponse response = new NodeReviewResponse();
+                response.setId(review.getId());
+                response.setRating(review.getRating());
+                response.setReview(review.getReview());
+                response.setCreatedAt(review.getCreatedAt());
+                response.setUser(userResponse);
 
                 return response;
         }

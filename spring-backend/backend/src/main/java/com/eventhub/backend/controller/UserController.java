@@ -11,7 +11,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/user")
 public class UserController {
 
         private final UserService userService;
@@ -63,5 +63,17 @@ public class UserController {
         public ApiResponse<UpdateLocationRequest> getLocation() {
                 UpdateLocationRequest response = userService.getLocation();
                 return new ApiResponse<>(true, "Location fetched successfully", response);
+        }
+
+        @GetMapping("/selectedLocation")
+        public ApiResponse<UpdateLocationRequest> getSelectedLocation(Authentication authentication) {
+                UpdateLocationRequest response = userService.getLocation();
+                return new ApiResponse<>(true, "Location fetched successfully", response);
+        }
+
+        @PutMapping("/{id}/updateInterests")
+        public ApiResponse<ProfileResponse> updateInterests(@PathVariable Long id) {
+                ProfileResponse response = userService.updateInterests(id);
+                return new ApiResponse<>(true, "Interests updated successfully", response);
         }
 }

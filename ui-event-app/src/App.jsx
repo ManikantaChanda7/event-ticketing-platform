@@ -43,12 +43,12 @@ function App() {
     eventVenueLoading,
   } = useSelector((state) => state.event);
   const { sessionsLoading, sessionLoading } = useSelector(
-    (state) => state.session
+    (state) => state.session,
   );
   const { organizerLoading } = useSelector((state) => state.organizerProfile);
   const { interestedEventsLoading } = useSelector((state) => state.auth);
   const { fetchBookingsLoading, fetchUserDetailsLoading } = useSelector(
-    (state) => state.user
+    (state) => state.user,
   );
   const {
     basicLoading,
@@ -86,7 +86,7 @@ function App() {
     sessionLoading;
 
   const hideHeaderFooter = ["/", "/login", "/register"].includes(
-    location.pathname
+    location.pathname,
   );
   const hideFooter =
     ["/", "/login", "/register", "/create-event"].includes(location.pathname) ||
@@ -117,7 +117,7 @@ function App() {
               <Route
                 path="/home"
                 element={
-                  <ProtectedRoute allowedRoles={["user"]}>
+                  <ProtectedRoute allowedRoles={["user", "USER"]}>
                     <HomePage />
                   </ProtectedRoute>
                 }
@@ -125,7 +125,7 @@ function App() {
               <Route
                 path="/create-event"
                 element={
-                  <ProtectedRoute allowedRoles={["organizer"]}>
+                  <ProtectedRoute allowedRoles={["organizer", "ORGANIZER"]}>
                     <CreateEvent />
                   </ProtectedRoute>
                 }
@@ -133,7 +133,7 @@ function App() {
               <Route
                 path="/event/:id"
                 element={
-                  <ProtectedRoute allowedRoles={["user"]}>
+                  <ProtectedRoute allowedRoles={["user", "USER"]}>
                     <EventDetailsPage />
                   </ProtectedRoute>
                 }
@@ -141,7 +141,7 @@ function App() {
               <Route
                 path="/settings"
                 element={
-                  <ProtectedRoute allowedRoles={["user"]}>
+                  <ProtectedRoute allowedRoles={["user", "USER"]}>
                     <Settings />
                   </ProtectedRoute>
                 }
@@ -149,7 +149,7 @@ function App() {
               <Route
                 path="/event/:id/sessions"
                 element={
-                  <ProtectedRoute allowedRoles={["user"]}>
+                  <ProtectedRoute allowedRoles={["user", "USER"]}>
                     <EventSessions />
                   </ProtectedRoute>
                 }
@@ -157,7 +157,7 @@ function App() {
               <Route
                 path="/payment"
                 element={
-                  <ProtectedRoute allowedRoles={["user"]}>
+                  <ProtectedRoute allowedRoles={["user", "USER"]}>
                     <PaymentPage />
                   </ProtectedRoute>
                 }
@@ -165,7 +165,7 @@ function App() {
               <Route
                 path="/register/organizer"
                 element={
-                  <ProtectedRoute allowedRoles={["user"]}>
+                  <ProtectedRoute allowedRoles={["user", "USER"]}>
                     <BecomeOrganizer />
                   </ProtectedRoute>
                 }
@@ -173,7 +173,7 @@ function App() {
               <Route
                 path="/search"
                 element={
-                  <ProtectedRoute allowedRoles={["user"]}>
+                  <ProtectedRoute allowedRoles={["user", "USER"]}>
                     <SearchPage />
                   </ProtectedRoute>
                 }
@@ -181,7 +181,7 @@ function App() {
               <Route
                 path="/category/:categoryName"
                 element={
-                  <ProtectedRoute allowedRoles={["user"]}>
+                  <ProtectedRoute allowedRoles={["user", "USER"]}>
                     <CategoryEventsPage />
                   </ProtectedRoute>
                 }
@@ -189,7 +189,7 @@ function App() {
               <Route
                 path="/bookings"
                 element={
-                  <ProtectedRoute allowedRoles={["user"]}>
+                  <ProtectedRoute allowedRoles={["user", "USER"]}>
                     <MyTicketsPage />
                   </ProtectedRoute>
                 }
@@ -197,7 +197,7 @@ function App() {
               <Route
                 path="/interests"
                 element={
-                  <ProtectedRoute allowedRoles={["user"]}>
+                  <ProtectedRoute allowedRoles={["user", "USER"]}>
                     <MyInterestsPage />
                   </ProtectedRoute>
                 }
@@ -205,7 +205,7 @@ function App() {
               <Route
                 path="/organizer-profile"
                 element={
-                  <ProtectedRoute allowedRoles={["user"]}>
+                  <ProtectedRoute allowedRoles={["user", "USER"]}>
                     <OrganizerProfile />
                   </ProtectedRoute>
                 }
@@ -214,7 +214,7 @@ function App() {
               <Route
                 path="/dashboard"
                 element={
-                  <ProtectedRoute allowedRoles={["organizer"]}>
+                  <ProtectedRoute allowedRoles={["organizer", "ORGANIZER"]}>
                     <Dashboard />
                   </ProtectedRoute>
                 }
@@ -222,7 +222,7 @@ function App() {
               <Route
                 path="/profile-settings"
                 element={
-                  <ProtectedRoute allowedRoles={["organizer"]}>
+                  <ProtectedRoute allowedRoles={["organizer", "ORGANIZER"]}>
                     <ProfileSettings />
                   </ProtectedRoute>
                 }
@@ -230,7 +230,7 @@ function App() {
               <Route
                 path="/manage/event/:id"
                 element={
-                  <ProtectedRoute allowedRoles={["organizer"]}>
+                  <ProtectedRoute allowedRoles={["organizer", "ORGANIZER"]}>
                     <ManageEvent />
                   </ProtectedRoute>
                 }
@@ -239,10 +239,12 @@ function App() {
               <Route
                 path="*"
                 element={
-                  <ProtectedRoute allowedRoles={["user", "organizer"]}>
+                  <ProtectedRoute
+                    allowedRoles={["user", "USER", "organizer", "ORGANIZER"]}
+                  >
                     {(() => {
                       const role = localStorage.getItem("role");
-                      return role === "organizer" ? (
+                      return role === "organizer" || role === "ORGANIZER" ? (
                         <Navigate to="/dashboard" replace />
                       ) : (
                         <Navigate to="/home" replace />

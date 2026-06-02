@@ -5,17 +5,17 @@ import api from "../../utils/api";
 export const fetchSessionById = createAsyncThunk(
   "session/fetchSessionById",
   async (sessionId) => {
-    let response = await api.get(`events/session/${sessionId}`);
+    let response = await api.get(`sessions/${sessionId}`);
     return response.data;
-  }
+  },
 );
 
 export const fetchSessionsByEventId = createAsyncThunk(
   "session/fetchSessionsByEventId",
   async (eventId) => {
-    let response = await api.get(`events/${eventId}/sessions`);
+    let response = await api.get(`sessions/event/${eventId}`);
     return response.data;
-  }
+  },
 );
 
 export const updateSession = createAsyncThunk(
@@ -24,13 +24,13 @@ export const updateSession = createAsyncThunk(
     try {
       const res = await api.put(
         `organizer/${sessionId}/update-session`,
-        payload
+        payload,
       );
       return res.data.session; // full response from backend
     } catch (err) {
       return rejectWithValue(err.response?.data || "Failed to update session");
     }
-  }
+  },
 );
 
 export const deleteSession = createAsyncThunk(
@@ -42,7 +42,7 @@ export const deleteSession = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(err.response?.data || "Failed to delete session");
     }
-  }
+  },
 );
 
 export const sessionSlice = createSlice({

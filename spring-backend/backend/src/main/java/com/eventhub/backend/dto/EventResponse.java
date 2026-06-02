@@ -66,4 +66,7 @@ public class EventResponse {
 
     // Venue as ID to match Node.js
     private Long venue;
+
+    // Sessions for ticket booking
+    private List<SessionResponse> sessions;
 }

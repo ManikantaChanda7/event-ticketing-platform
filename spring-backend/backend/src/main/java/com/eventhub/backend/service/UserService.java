@@ -39,4 +39,6 @@ public interface UserService {
         UpdateLocationRequest getLocation();
 
         List<Long> getUserInterestedEventIds(String userEmail);
+
+        ProfileResponse updateInterests(Long userId);
 }

@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { setSelectedEvent } from "../redux/slices/eventSlice";
 
-const BannerShow = () => {
+const BannerShow = ({ events: incomingEvents }) => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
@@ -15,7 +15,14 @@ const BannerShow = () => {
   const [isAnimating, setIsAnimating] = useState(true);
   const autoSlideRef = useRef(null);
 
-  let events = filteredEvents.featured.data;
+  const events = incomingEvents?.length
+    ? incomingEvents
+    : filteredEvents?.featured?.data?.data || [];
+
+  if (!events.length) {
+    return null;
+  }
+
   const slides = [events[events.length - 1], ...events, events[0]];
   const event = slides[index];
 
@@ -106,11 +113,11 @@ const BannerShow = () => {
         return item?.selectedWeekdays?.length
           ? `${format(start, "MMM d")} – ${format(
               end,
-              "MMM d"
+              "MMM d",
             )} • Weekly (${item?.selectedWeekdays.join(", ")})`
           : `${format(start, "MMM d")} – ${format(
               end,
-              "MMM d"
+              "MMM d",
             )} • Weekly • ${time}`;
       default:
         return format(start, "EEE, MMM d");
@@ -136,7 +143,7 @@ const BannerShow = () => {
 
   const handleClick = () => {
     dispatch(setSelectedEvent(event));
-    navigate("/event/" + event._id);
+    navigate("/event/" + (event._id || event.id));
   };
 
   return (

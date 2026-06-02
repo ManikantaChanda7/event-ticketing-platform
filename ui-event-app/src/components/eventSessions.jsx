@@ -1,8 +1,12 @@
 import { ChevronLeft, ChevronRight, ShoppingCart } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
-import { bookTickets, fetchEventVenue } from "../redux/slices/eventSlice";
+import { useNavigate, useParams } from "react-router-dom";
+import {
+  bookTickets,
+  fetchEventById,
+  fetchEventVenue,
+} from "../redux/slices/eventSlice";
 import {
   fetchSessionById,
   fetchSessionsByEventId,
@@ -11,6 +15,7 @@ import {
 export default function EventSessions() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { id } = useParams();
 
   const scrollRef = useRef(null);
 
@@ -22,11 +27,17 @@ export default function EventSessions() {
   const [sessionId, setSessionId] = useState(null);
 
   const { selectedEvent: event, selectedEventVenue: venue } = useSelector(
-    (state) => state.event
+    (state) => state.event,
   );
   const { sessions, selectedSession: session } = useSelector(
-    (state) => state.session
+    (state) => state.session,
   );
+
+  useEffect(() => {
+    if (id && !event?._id) {
+      dispatch(fetchEventById(id));
+    }
+  }, [dispatch, id, event?._id]);
 
   useEffect(() => {
     if (event?._id) {
@@ -75,7 +86,7 @@ export default function EventSessions() {
 
   const totalSeatPrice = selectedSeats.reduce(
     (sum, s) => sum + getSeatPrice(s.section),
-    0
+    0,
   );
 
   const fakePayment = async () => {
@@ -101,16 +112,16 @@ export default function EventSessions() {
   const toggleSeat = (sectionName, seatId) => {
     setSelectedSeats((prev) => {
       const exists = prev.find(
-        (s) => s.seatId === seatId && s.section === sectionName
+        (s) => s.seatId === seatId && s.section === sectionName,
       );
       if (exists) {
         // remove it
         return prev.filter(
-          (s) => !(s.seatId === seatId && s.section === sectionName)
+          (s) => !(s.seatId === seatId && s.section === sectionName),
         );
       } else {
         const price = session?.tickets.find(
-          (t) => t.type === sectionName
+          (t) => t.type === sectionName,
         ).price;
         return [...prev, { section: sectionName, seatId, price }];
       }
@@ -119,7 +130,7 @@ export default function EventSessions() {
 
   const handleBooking = async () => {
     await dispatch(
-      bookTickets({ eventId: event._id, sessionId, selectedSeats })
+      bookTickets({ eventId: event._id, sessionId, selectedSeats }),
     ).unwrap();
     navigate("/bookings");
   };
@@ -341,7 +352,7 @@ export default function EventSessions() {
                     if (!acc[s.section]) acc[s.section] = [];
                     acc[s.section].push(s.seatId);
                     return acc;
-                  }, {})
+                  }, {}),
                 ).map(([section, seats]) => {
                   const pricePerSeat =
                     session?.tickets.find((t) => t.type === section)?.price ||
@@ -466,11 +477,11 @@ export default function EventSessions() {
                 {/* Title */}
                 <h2 className="text-xl font-bold">
                   {session?.tickets.filter(
-                    (t) => t.type === openSection.section
+                    (t) => t.type === openSection.section,
                   ).length > 0
                     ? `${openSection.section} - ₹${
                         session?.tickets.find(
-                          (t) => t.type === openSection.section
+                          (t) => t.type === openSection.section,
                         ).price
                       }`
                     : `${openSection.section} - ₹12.00`}
@@ -551,7 +562,7 @@ export default function EventSessions() {
                       const seatInfo = session?.seats.find(
                         (s) =>
                           s.seatId === seatId &&
-                          s.section === openSection.section
+                          s.section === openSection.section,
                       );
 
                       const status = seatInfo?.status || "available";
@@ -559,7 +570,7 @@ export default function EventSessions() {
                       const isSelected = selectedSeats?.some(
                         (s) =>
                           s.seatId === seatId &&
-                          s.section === openSection.section
+                          s.section === openSection.section,
                       );
 
                       let classes =

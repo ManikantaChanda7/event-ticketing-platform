@@ -12,7 +12,7 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 
   // Role is not allowed for this route: redirect to home or unauthorized page
   if (allowedRoles && !allowedRoles.includes(role)) {
-    if (role === "user") {
+    if (role === "user" || role === "USER") {
       return <Navigate to="/home" replace />;
     }
     return <Navigate to="/dashboard" replace />;

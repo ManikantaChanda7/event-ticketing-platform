@@ -22,22 +22,19 @@ export default function MyInterestsPage() {
   const [status, setStatus] = useState("ongoing");
 
   const userInterests = useSelector(
-    (state) => state.event.filteredEvents?.userInterests
+    (state) => state.event.filteredEvents?.userInterests,
   );
-  const { interestedEvents } = useSelector((state) => state.auth);
 
-  const events = userInterests?.data?.filter((item) =>
-    interestedEvents?.includes(item?._id)
-  );
+  const events = userInterests?.data?.data;
+  const totalPages = userInterests?.data?.totalPages;
+  const totalItems = userInterests?.data?.totalItems;
+  const limit = 8;
 
   const TABS = [
     { label: "Ongoing", icon: <Activity className="w-4 h-4" /> },
     { label: "Upcoming", icon: <CalendarClock className="w-4 h-4" /> },
     { label: "Completed", icon: <CheckCircle className="w-4 h-4" /> },
   ];
-  const totalPages = userInterests?.totalPages;
-  const totalItems = userInterests?.totalItems;
-  const limit = 8;
 
   const handleChipClick = (label, idx) => {
     setTab(idx);
@@ -67,7 +64,7 @@ export default function MyInterestsPage() {
           fetchUserInterestedEvents({
             key: "userInterests",
             params: buildQuery(),
-          })
+          }),
         ).unwrap();
       } finally {
         setLoading(false);
@@ -262,7 +259,7 @@ export default function MyInterestsPage() {
 
                   return Array.from(
                     { length: end - start + 1 },
-                    (_, i) => start + i
+                    (_, i) => start + i,
                   ).map((num) => (
                     <li key={num}>
                       <button

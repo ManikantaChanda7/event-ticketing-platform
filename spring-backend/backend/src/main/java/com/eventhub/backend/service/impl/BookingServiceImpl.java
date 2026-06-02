@@ -41,67 +41,76 @@ public class BookingServiceImpl implements BookingService {
         }
 
         @Override
+        @Transactional
         public BookingResponse createBooking(BookingRequest request) {
 
-                String email = SecurityContextHolder
-                                .getContext()
-                                .getAuthentication()
-                                .getName();
+                try {
+                        String email = SecurityContextHolder
+                                        .getContext()
+                                        .getAuthentication()
+                                        .getName();
 
-                User user = userRepository.findByEmail(email)
-                                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+                        User user = userRepository.findByEmail(email)
+                                        .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
-                Event event = eventRepository.findById(request.getEventId())
-                                .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
+                        Event event = eventRepository.findById(request.getEventId())
+                                        .orElseThrow(() -> new ResourceNotFoundException(
+                                                        "Event not found with id: " + request.getEventId()));
 
-                Session session = sessionRepository.findById(request.getSessionId())
-                                .orElseThrow(() -> new ResourceNotFoundException("Session not found"));
+                        Session session = sessionRepository.findById(request.getSessionId())
+                                        .orElseThrow(() -> new ResourceNotFoundException(
+                                                        "Session not found with id: " + request.getSessionId()));
 
-                // TODO: Implement booking logic with new structure
-                // Calculate total amount from selected seats
-                BigDecimal totalAmount = BigDecimal.ZERO;
-                for (BookingRequest.SelectedSeat seat : request.getSelectedSeats()) {
-                        totalAmount = totalAmount.add(BigDecimal.valueOf(seat.getPrice()));
+                        // Calculate total amount from selected seats
+                        BigDecimal totalAmount = BigDecimal.ZERO;
+                        for (BookingRequest.SelectedSeat seat : request.getSelectedSeats()) {
+                                totalAmount = totalAmount.add(BigDecimal.valueOf(seat.getPrice()));
+                        }
+
+                        Booking booking = new Booking();
+                        booking.setUser(user);
+                        booking.setEvent(event);
+                        booking.setSession(session);
+                        booking.setTotalAmount(totalAmount);
+                        booking.setStatus(BookingStatus.CONFIRMED);
+
+                        // Map selected seats to BookedSeat entities
+                        List<Booking.BookedSeat> bookedSeats = request.getSelectedSeats().stream()
+                                        .map(seat -> new Booking.BookedSeat(seat.getSeatId(), seat.getSection(),
+                                                        BigDecimal.valueOf(seat.getPrice())))
+                                        .toList();
+                        booking.setSeats(bookedSeats);
+
+                        // Calculate ticketsSummary
+                        List<Booking.TicketSummary> ticketSummaries = request.getSelectedSeats().stream()
+                                        .collect(java.util.stream.Collectors.groupingBy(
+                                                        BookingRequest.SelectedSeat::getSection,
+                                                        java.util.stream.Collectors.collectingAndThen(
+                                                                        java.util.stream.Collectors.toList(),
+                                                                        list -> {
+                                                                                Booking.TicketSummary summary = new Booking.TicketSummary();
+                                                                                summary.setType(list.get(0)
+                                                                                                .getSection());
+                                                                                summary.setQuantity(list.size());
+                                                                                summary.setTotalPrice(
+                                                                                                BigDecimal.valueOf(list
+                                                                                                                .stream()
+                                                                                                                .mapToDouble(BookingRequest.SelectedSeat::getPrice)
+                                                                                                                .sum()));
+                                                                                return summary;
+                                                                        })))
+                                        .values()
+                                        .stream()
+                                        .toList();
+                        booking.setTicketsSummary(ticketSummaries);
+
+                        booking = bookingRepository.save(booking);
+
+                        return mapToResponse(booking);
+                } catch (Exception e) {
+                        e.printStackTrace();
+                        throw new RuntimeException("Failed to create booking: " + e.getMessage(), e);
                 }
-
-                Booking booking = new Booking();
-                booking.setUser(user);
-                booking.setEvent(event);
-                booking.setSession(session);
-                booking.setTotalAmount(totalAmount);
-                booking.setStatus(BookingStatus.CONFIRMED);
-
-                // Map selected seats to BookedSeat entities
-                List<Booking.BookedSeat> bookedSeats = request.getSelectedSeats().stream()
-                                .map(seat -> new Booking.BookedSeat(seat.getSeatId(), seat.getSection(),
-                                                BigDecimal.valueOf(seat.getPrice())))
-                                .toList();
-                booking.setSeats(bookedSeats);
-
-                // Calculate ticketsSummary
-                List<Booking.TicketSummary> ticketSummaries = request.getSelectedSeats().stream()
-                                .collect(java.util.stream.Collectors.groupingBy(
-                                                BookingRequest.SelectedSeat::getSection,
-                                                java.util.stream.Collectors.collectingAndThen(
-                                                                java.util.stream.Collectors.toList(),
-                                                                list -> {
-                                                                        Booking.TicketSummary summary = new Booking.TicketSummary();
-                                                                        summary.setType(list.get(0).getSection());
-                                                                        summary.setQuantity(list.size());
-                                                                        summary.setTotalPrice(BigDecimal.valueOf(list
-                                                                                        .stream()
-                                                                                        .mapToDouble(BookingRequest.SelectedSeat::getPrice)
-                                                                                        .sum()));
-                                                                        return summary;
-                                                                })))
-                                .values()
-                                .stream()
-                                .toList();
-                booking.setTicketsSummary(ticketSummaries);
-
-                booking = bookingRepository.save(booking);
-
-                return mapToResponse(booking);
         }
 
         @Override
@@ -238,12 +247,51 @@ public class BookingServiceImpl implements BookingService {
                                         .toList();
                 }
 
+                // Map event to DTO
+                BookingResponse.EventDTO eventDTO = null;
+                if (booking.getEvent() != null) {
+                        BookingResponse.LocationDTO locationDTO = null;
+                        if (booking.getEvent().getLocationLabel() != null
+                                        || booking.getEvent().getLocationLatitude() != null) {
+                                locationDTO = BookingResponse.LocationDTO.builder()
+                                                .label(booking.getEvent().getLocationLabel())
+                                                .latitude(booking.getEvent().getLocationLatitude())
+                                                .longitude(booking.getEvent().getLocationLongitude())
+                                                .build();
+                        }
+                        eventDTO = BookingResponse.EventDTO.builder()
+                                        .id(booking.getEvent().getId())
+                                        .title(booking.getEvent().getTitle())
+                                        .description(booking.getEvent().getDescription())
+                                        .category(booking.getEvent().getCategory())
+                                        .locationType(booking.getEvent().getLocationType())
+                                        .location(locationDTO)
+                                        .bannerImage(booking.getEvent().getBannerImage())
+                                        .thumbnailImage(booking.getEvent().getThumbnailImage())
+                                        .averageRating(booking.getEvent().getAverageRating())
+                                        .interestedUsers(booking.getEvent().getInterestedUsers())
+                                        .build();
+                }
+
+                // Map session to DTO
+                BookingResponse.SessionDTO sessionDTO = null;
+                if (booking.getSession() != null) {
+                        sessionDTO = BookingResponse.SessionDTO.builder()
+                                        .id(booking.getSession().getId())
+                                        .date(booking.getSession().getDate() != null
+                                                        ? booking.getSession().getDate().toString()
+                                                        : null)
+                                        .startTime(booking.getSession().getStartTime())
+                                        .endTime(booking.getSession().getEndTime())
+                                        .build();
+                }
+
                 return BookingResponse.builder()
                                 ._id(booking.getId())
                                 .id(booking.getId())
                                 .user(booking.getUser() != null ? booking.getUser().getId() : null)
-                                .event(booking.getEvent() != null ? booking.getEvent().getId() : null)
-                                .session(booking.getSession() != null ? booking.getSession().getId() : null)
+                                .event(eventDTO)
+                                .session(sessionDTO)
                                 .seats(bookedSeatsResponse)
                                 .ticketsSummary(ticketSummariesResponse)
                                 .totalAmount(booking.getTotalAmount())

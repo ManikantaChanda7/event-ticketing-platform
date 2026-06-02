@@ -4,13 +4,21 @@ import com.eventhub.backend.dto.ApiResponse;
 import com.eventhub.backend.dto.EventRequest;
 import com.eventhub.backend.dto.EventResponse;
 import com.eventhub.backend.dto.EventSummaryResponse;
+import com.eventhub.backend.dto.PaginatedResponse;
 import com.eventhub.backend.service.EventService;
 import jakarta.validation.Valid;
 import org.springframework.security.core.Authentication;
 
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/events")
@@ -130,8 +138,12 @@ public class EventController {
         }
 
         @GetMapping("/user/interests")
-        public ApiResponse<List<EventSummaryResponse>> getMyInterestedEvents() {
-                List<EventSummaryResponse> response = eventService.getMyInterestedEvents();
+        public ApiResponse<PaginatedResponse<EventSummaryResponse>> getMyInterestedEvents(
+                        @RequestParam(required = false) Integer page,
+                        @RequestParam(required = false) Integer limit,
+                        @RequestParam(required = false) String status) {
+                PaginatedResponse<EventSummaryResponse> response = eventService.getMyInterestedEvents(page, limit,
+                                status);
                 return new ApiResponse<>(true, "My interested events fetched successfully", response);
         }
 
@@ -144,25 +156,98 @@ public class EventController {
         }
 
         @GetMapping("/{eventId}/sessionsCount")
-        public ApiResponse<Long> getSessionsCount(
+        public ApiResponse<Map<String, Object>> getSessionsCount(
                         @PathVariable Long eventId) {
-                Long response = eventService.getSessionsCount(eventId);
+                long count = eventService.getSessionsCount(eventId);
+                Map<String, Object> response = new HashMap<>();
+                response.put("count", count);
+                response.put("sessionsAvailable", count > 0);
                 return new ApiResponse<>(true, "Sessions count fetched successfully", response);
         }
 
         @GetMapping("/organizer/{organizerId}")
-        public ApiResponse<List<EventSummaryResponse>> getEventsByOrganizer(
-                        @PathVariable Long organizerId) {
-                List<EventSummaryResponse> response = eventService.getEventsByOrganizer(organizerId);
+        public ApiResponse<PaginatedResponse<EventSummaryResponse>> getEventsByOrganizer(
+                        @PathVariable Long organizerId,
+                        @RequestParam(required = false) Integer page,
+                        @RequestParam(required = false) Integer limit) {
+                PaginatedResponse<EventSummaryResponse> response = eventService.getEventsByOrganizer(organizerId, page,
+                                limit);
                 return new ApiResponse<>(true, "Events by organizer fetched successfully", response);
         }
 
         @GetMapping("/filtered")
-        public ApiResponse<List<EventSummaryResponse>> filterEvents(
+        public ApiResponse<PaginatedResponse<EventSummaryResponse>> filterEvents(
                         @RequestParam(required = false) String category,
                         @RequestParam(required = false) String city,
-                        @RequestParam(required = false) String keyword) {
-                List<EventSummaryResponse> response = eventService.filterEvents(category, city, keyword);
+                        @RequestParam(required = false) String keyword,
+                        @RequestParam(required = false) String search,
+                        @RequestParam(required = false) Boolean isFeatured,
+                        @RequestParam(required = false) Boolean location,
+                        @RequestParam(required = false) Integer page,
+                        @RequestParam(required = false) Integer limit,
+                        @RequestParam(required = false) String recurrence,
+                        @RequestParam(required = false) Double minRating,
+                        @RequestParam(required = false) String startDate,
+                        @RequestParam(required = false) String endDate,
+                        @RequestParam(required = false) String language,
+                        @RequestParam(required = false) Integer age,
+                        @RequestParam(required = false) Integer ageLimit,
+                        @RequestParam(required = false) String startTime,
+                        @RequestParam(required = false) String endTime) {
+                // Use search if keyword is not provided
+                String effectiveKeyword = keyword != null ? keyword : search;
+                // Use age if ageLimit is not provided
+                Integer effectiveAgeLimit = ageLimit != null ? ageLimit : age;
+
+                List<String> categories = parseCsv(category);
+                List<String> languages = parseCsv(language);
+                LocalDate startDateObj = parseDate(startDate);
+                LocalDate endDateObj = parseDate(endDate);
+
+                PaginatedResponse<EventSummaryResponse> response = eventService.filterEvents(
+                                categories,
+                                city,
+                                effectiveKeyword,
+                                isFeatured,
+                                location,
+                                page,
+                                limit,
+                                recurrence,
+                                minRating,
+                                startDateObj,
+                                endDateObj,
+                                languages,
+                                effectiveAgeLimit,
+                                startTime,
+                                endTime);
                 return new ApiResponse<>(true, "Filtered events fetched successfully", response);
+        }
+
+        private List<String> parseCsv(String input) {
+                if (input == null || input.isBlank()) {
+                        return null;
+                }
+                List<String> values = Arrays.stream(input.split(","))
+                                .map(String::trim)
+                                .filter(s -> !s.isEmpty())
+                                .collect(Collectors.toList());
+                return values.isEmpty() ? null : values;
+        }
+
+        private LocalDate parseDate(String date) {
+                if (date == null || date.isBlank()) {
+                        return null;
+                }
+                try {
+                        // Handle ISO 8601 format with time (e.g., "2026-06-23T18:30:00.000Z")
+                        if (date.contains("T")) {
+                                return java.time.Instant.parse(date).atZone(java.time.ZoneId.systemDefault())
+                                                .toLocalDate();
+                        }
+                        // Handle simple date format (e.g., "2026-06-23")
+                        return LocalDate.parse(date);
+                } catch (Exception e) {
+                        return null;
+                }
         }
 }

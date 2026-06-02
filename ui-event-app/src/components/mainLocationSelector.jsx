@@ -12,7 +12,7 @@ export default function MainLocationSelector({ isOpen, onClose, onSelect }) {
   const [loading, setLoading] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState(null);
   const { citySearchResults, citySearchLoading } = useSelector(
-    (state) => state.user
+    (state) => state.user,
   );
 
   const cities = [
@@ -96,7 +96,7 @@ export default function MainLocationSelector({ isOpen, onClose, onSelect }) {
         citySearchResults.map((c) => ({
           label: `${c.City}, ${c.State}`,
           coords: [c.Long, c.Lat],
-        }))
+        })),
       );
     } else {
       setOptions([]);
@@ -134,8 +134,8 @@ export default function MainLocationSelector({ isOpen, onClose, onSelect }) {
         lat: option.coords?.[1] ?? null,
         label: option.label,
       };
-      dispatch(
-        updateLocation({ lat: param.lat, lng: param.lng, label: param.label })
+      await dispatch(
+        updateLocation({ lat: param.lat, lng: param.lng, label: param.label }),
       );
     }
   }
@@ -197,7 +197,7 @@ export default function MainLocationSelector({ isOpen, onClose, onSelect }) {
                     lat: param.lat,
                     lng: param.lng,
                     label: param.label,
-                  })
+                  }),
                 );
               }
               dismissToast(toastId);
@@ -219,7 +219,7 @@ export default function MainLocationSelector({ isOpen, onClose, onSelect }) {
         (err) => {
           console.error("Geolocation error:", err);
           alert("Unable to fetch current location.");
-        }
+        },
       );
     } else {
       alert("Geolocation not supported by your browser.");

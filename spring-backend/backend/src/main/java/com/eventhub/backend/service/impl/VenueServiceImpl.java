@@ -6,17 +6,24 @@ import com.eventhub.backend.entity.Venue;
 import com.eventhub.backend.exception.ResourceNotFoundException;
 import com.eventhub.backend.repository.VenueRepository;
 import com.eventhub.backend.service.VenueService;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class VenueServiceImpl implements VenueService {
 
     private final VenueRepository venueRepository;
+    private final ObjectMapper objectMapper;
 
-    public VenueServiceImpl(VenueRepository venueRepository) {
+    public VenueServiceImpl(VenueRepository venueRepository, ObjectMapper objectMapper) {
         this.venueRepository = venueRepository;
+        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -81,6 +88,27 @@ public class VenueServiceImpl implements VenueService {
     }
 
     private VenueResponse mapToResponse(Venue venue) {
+        List<Map<String, Object>> seatingLayout = null;
+        if (venue.getSeatingLayout() != null && !venue.getSeatingLayout().isEmpty()) {
+            try {
+                // Parse the seating layout from object format to list format
+                Map<String, Object> layoutMap = objectMapper.readValue(venue.getSeatingLayout(),
+                        new TypeReference<Map<String, Object>>() {
+                        });
+                seatingLayout = new ArrayList<>();
+
+                for (Map.Entry<String, Object> entry : layoutMap.entrySet()) {
+                    Map<String, Object> sectionData = new HashMap<>();
+                    sectionData.put("section", entry.getKey());
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> sectionDetails = (Map<String, Object>) entry.getValue();
+                    sectionData.putAll(sectionDetails);
+                    seatingLayout.add(sectionData);
+                }
+            } catch (Exception e) {
+                seatingLayout = null;
+            }
+        }
 
         return VenueResponse.builder()
                 .id(venue.getId())
@@ -92,6 +120,7 @@ public class VenueServiceImpl implements VenueService {
                 .capacity(venue.getCapacity())
                 .latitude(venue.getLatitude())
                 .longitude(venue.getLongitude())
+                .seatingLayout(seatingLayout)
                 .build();
     }
 }

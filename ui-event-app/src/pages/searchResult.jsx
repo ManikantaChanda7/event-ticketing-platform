@@ -36,8 +36,8 @@ const SearchPage = ({ defaultCategory }) => {
   const { filteredEvents, loading, filteredLoading, filteredError } =
     useSelector((state) => state.event);
 
-  const totalPages = filteredEvents?.searchEvents?.totalPages || 1;
-  const totalItems = filteredEvents?.searchEvents?.totalItems || 0;
+  const totalPages = filteredEvents?.searchEvents?.data?.totalPages || 1;
+  const totalItems = filteredEvents?.searchEvents?.data?.totalItems || 0;
   const chipRanges = {
     Today: () => {
       const today = new Date();
@@ -60,7 +60,7 @@ const SearchPage = ({ defaultCategory }) => {
   useEffect(() => {
     const query = buildQuery();
     dispatch(
-      fetchFilteredEvents({ params: query, key: "searchEvents" })
+      fetchFilteredEvents({ params: query, key: "searchEvents" }),
     ).unwrap();
   }, [dispatch, filters, page, search, category]);
 
@@ -313,7 +313,7 @@ const SearchPage = ({ defaultCategory }) => {
                             {label}
                           </button>
                         );
-                      }
+                      },
                     )}
                   </div>
                 </div>
@@ -328,7 +328,7 @@ const SearchPage = ({ defaultCategory }) => {
               )}
 
               <div className="grid justify-items-center grid-cols-2 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredEvents?.searchEvents?.data?.map((event) => (
+                {filteredEvents?.searchEvents?.data?.data?.map((event) => (
                   <EventCard key={event._id} item={event} />
                 ))}
               </div>
@@ -369,7 +369,7 @@ const SearchPage = ({ defaultCategory }) => {
 
                     return Array.from(
                       { length: end - start + 1 },
-                      (_, i) => start + i
+                      (_, i) => start + i,
                     ).map((num) => (
                       <li key={num}>
                         <button

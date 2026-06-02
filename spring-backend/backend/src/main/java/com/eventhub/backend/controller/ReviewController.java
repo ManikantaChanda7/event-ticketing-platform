@@ -2,6 +2,7 @@ package com.eventhub.backend.controller;
 
 import com.eventhub.backend.dto.ApiResponse;
 import com.eventhub.backend.dto.EventRatingResponse;
+import com.eventhub.backend.dto.NodeReviewResponse;
 import com.eventhub.backend.dto.ReviewRequest;
 import com.eventhub.backend.dto.ReviewResponse;
 import com.eventhub.backend.entity.Review;
@@ -33,9 +34,9 @@ public class ReviewController {
         }
 
         @GetMapping("/event/{eventId}")
-        public ApiResponse<List<ReviewResponse>> getEventReviews(
+        public ApiResponse<List<NodeReviewResponse>> getEventReviews(
                         @PathVariable Long eventId) {
-                List<ReviewResponse> response = reviewService.getEventReviews(eventId);
+                List<NodeReviewResponse> response = reviewService.getEventReviews(eventId);
                 return new ApiResponse<>(true, "Event reviews fetched successfully", response);
         }
 

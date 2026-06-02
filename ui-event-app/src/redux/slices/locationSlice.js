@@ -1,5 +1,4 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
 import api from "../../utils/api";
 
 export const fetchLocation = createAsyncThunk(
@@ -9,21 +8,21 @@ export const fetchLocation = createAsyncThunk(
       withCredentials: true, // ✅ must be here
     });
     return response.data;
-  }
+  },
 );
 
 export const updateLocation = createAsyncThunk(
   "location/updateLocation",
   async ({ lat, lng, label }) => {
-    const response = await api.post(
+    const response = await api.put(
       "user/location",
-      { lat, lng, label },
+      { latitude: lat, longitude: lng, locationLabel: label },
       {
         withCredentials: true, // ✅ must be here
-      }
+      },
     );
     return response.data;
-  }
+  },
 );
 
 const initialState = {
@@ -44,7 +43,7 @@ export const locationSlice = createSlice({
       })
       .addCase(fetchLocation.fulfilled, (state, action) => {
         state.loading = false;
-        state.location = action.payload;
+        state.location = action.payload.data;
       })
       .addCase(fetchLocation.rejected, (state, action) => {
         state.loading = false;

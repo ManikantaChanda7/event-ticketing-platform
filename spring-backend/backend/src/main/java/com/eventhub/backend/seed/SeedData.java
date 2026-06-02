@@ -93,8 +93,7 @@ public class SeedData implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) throws Exception {
-        // Uncomment the line below to run seeding on application startup
-        seedDatabase();
+        // seedDatabase();
     }
 
     @Transactional

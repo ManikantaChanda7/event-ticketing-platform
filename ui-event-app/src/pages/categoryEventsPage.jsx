@@ -11,7 +11,7 @@ const CategoryEventsPage = () => {
 
   const { filteredEvents } = useSelector((state) => state.event);
 
-  const bannerEvents = filteredEvents?.featured?.data || [];
+  const bannerEvents = filteredEvents?.featured?.data?.data || [];
 
   const buildListQuery = () => {
     const query = {

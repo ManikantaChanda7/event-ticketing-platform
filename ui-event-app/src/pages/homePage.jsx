@@ -152,9 +152,12 @@ export default function HomePage() {
 
   const role = localStorage.getItem("role");
 
-  const locationLabel = useSelector(
-    (state) => state.location.location
-  )?.label.split(", ")[0];
+  const locationLabel =
+    useSelector(
+      (state) =>
+        state.location.location?.label ||
+        state.location.location?.locationLabel,
+    )?.split(", ")[0] || "Your City";
   const { filteredEvents } = useSelector((state) => state.event);
 
   const pageVariants = {
@@ -172,23 +175,37 @@ export default function HomePage() {
   useEffect(() => {
     dispatch(fetchTrendingEvents()).unwrap();
     dispatch(fetchRecommendedEvents()).unwrap();
-  }, [dispatch]);
-
-  useEffect(() => {
-    if (!locationLabel) return;
     dispatch(fetchPopularEvents()).unwrap();
     dispatch(
       fetchFilteredEvents({
         params: {
           isFeatured: true,
-          location: true,
+          location: false,
           page: 1,
           limit: 10,
         },
         key: "featured",
-      })
+      }),
     ).unwrap();
-  }, [dispatch, locationLabel]);
+  }, [dispatch]);
+
+  // Refetch popular events when location changes
+  useEffect(() => {
+    if (locationLabel && locationLabel !== "Your City") {
+      dispatch(fetchPopularEvents()).unwrap();
+      dispatch(
+        fetchFilteredEvents({
+          params: {
+            isFeatured: true,
+            location: true,
+            page: 1,
+            limit: 10,
+          },
+          key: "featured",
+        }),
+      ).unwrap();
+    }
+  }, [locationLabel, dispatch]);
 
   const handleCategory = (label) => {
     // navigate("/search", { state: label });
@@ -208,9 +225,9 @@ export default function HomePage() {
         >
           <Box sx={{ bgcolor: "#f7f7f7" }}>
             {/* BannerShow (UNCHANGED) */}
-            {filteredEvents?.featured?.data?.length > 0 && (
+            {filteredEvents?.featured?.data?.data?.length > 0 && (
               <Box>
-                <BannerShow />
+                <BannerShow events={filteredEvents.featured.data.data} />
               </Box>
             )}
 

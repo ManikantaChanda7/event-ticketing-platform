@@ -11,7 +11,7 @@ export const fetchUserDetails = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(err.response?.data || err.message);
     }
-  }
+  },
 );
 
 // 2️⃣ Update Profile (name + phone)
@@ -24,7 +24,7 @@ export const updateProfile = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(err.response?.data || err.message);
     }
-  }
+  },
 );
 
 // 3️⃣ Update Email
@@ -37,7 +37,7 @@ export const updateEmail = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(err.response?.data || err.message);
     }
-  }
+  },
 );
 
 // 4️⃣ Update Password
@@ -50,7 +50,7 @@ export const updatePassword = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(err.response?.data || err.message);
     }
-  }
+  },
 );
 
 export const isUserBookedEvent = createAsyncThunk(
@@ -62,45 +62,43 @@ export const isUserBookedEvent = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(err.response?.data || err.message);
     }
-  }
+  },
 );
 
 export const fetchUserBookings = createAsyncThunk(
   "user/fetchUserBookings",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.get("bookings");
+      const response = await api.get("bookings/my-bookings");
       return response.data;
     } catch (err) {
       return rejectWithValue(err.response?.data || "Failed to fetch bookings");
     }
-  }
+  },
 );
 
 export const searchCities = createAsyncThunk(
   "user/searchCities",
   async (query, { rejectWithValue }) => {
     try {
-      const res = await api.get(
-        `user/searchCities?q=${encodeURIComponent(query)}`
-      );
+      const res = await api.get(`cities/search?q=${encodeURIComponent(query)}`);
       return res.data; // list of cities
     } catch (err) {
       return rejectWithValue(err.response?.data || "City search failed");
     }
-  }
+  },
 );
 
 export const fetchAllCities = createAsyncThunk(
   "user/fetchAllCities",
   async (_, { rejectWithValue }) => {
     try {
-      const res = await api.get("user/searchCities?q=");
+      const res = await api.get("cities/search?q=");
       return res.data;
     } catch (err) {
       return rejectWithValue(err.response?.data || "Failed to fetch cities");
     }
-  }
+  },
 );
 
 const userSlice = createSlice({
@@ -181,7 +179,7 @@ const userSlice = createSlice({
 
       .addCase(searchCities.fulfilled, (state, action) => {
         state.citySearchLoading = false;
-        state.citySearchResults = action.payload || [];
+        state.citySearchResults = action.payload.data || [];
       })
 
       .addCase(searchCities.rejected, (state, action) => {
@@ -194,6 +192,7 @@ const userSlice = createSlice({
       })
       .addCase(fetchAllCities.fulfilled, (state, action) => {
         state.citySearchLoading = false;
+        state.citySearchResults = action.payload.data || [];
       })
       .addCase(fetchAllCities.rejected, (state, action) => {
         state.citySearchLoading = false;

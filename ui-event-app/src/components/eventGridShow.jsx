@@ -6,22 +6,27 @@ const EventGridShow = ({ title, events }) => {
   const [page, setPage] = useState(0);
   const [itemsPerPage, setItemsPerPage] = useState(1);
 
-  const totalPages = Math.ceil(events?.length / itemsPerPage);
+  const eventsArray = Array.isArray(events) ? events : [];
+  const totalPages = Math.ceil(eventsArray.length / itemsPerPage);
 
   const goPrev = () => page > 0 && setPage((p) => p - 1);
   const goNext = () => page < totalPages - 1 && setPage((p) => p + 1);
 
-  const currentItems = events?.slice(
+  const currentItems = eventsArray.slice(
     page * itemsPerPage,
-    (page + 1) * itemsPerPage
+    (page + 1) * itemsPerPage,
   );
 
   useEffect(() => {
     const updateItemsPerPage = () => {
-      if (window.innerWidth >= 1536) setItemsPerPage(4); // 2xl
-      else if (window.innerWidth >= 1280) setItemsPerPage(4); // xl
-      else if (window.innerWidth >= 800) setItemsPerPage(3); // lg
-      else if (window.innerWidth >= 400) setItemsPerPage(2); // md
+      if (window.innerWidth >= 1536)
+        setItemsPerPage(4); // 2xl
+      else if (window.innerWidth >= 1280)
+        setItemsPerPage(4); // xl
+      else if (window.innerWidth >= 800)
+        setItemsPerPage(3); // lg
+      else if (window.innerWidth >= 400)
+        setItemsPerPage(2); // md
       else setItemsPerPage(1); // sm
     };
 

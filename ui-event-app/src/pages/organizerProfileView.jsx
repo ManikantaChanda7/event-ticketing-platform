@@ -17,7 +17,7 @@ function OrganizerProfile() {
   const dispatch = useDispatch();
 
   const { organizer, organizerEvents, organizerEventsLoading } = useSelector(
-    (state) => state.organizerProfile
+    (state) => state.organizerProfile,
   );
 
   const [page, setPage] = useState(1);
@@ -27,7 +27,7 @@ function OrganizerProfile() {
     rating: null,
   });
 
-  const totalPages = organizerEvents?.totalPages || 5;
+  const totalPages = organizerEvents?.data?.totalPages || 1;
   const id = organizer?._id;
 
   const sortOptions = [
@@ -265,7 +265,7 @@ function OrganizerProfile() {
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {organizerEvents?.data?.map((event) => (
+              {organizerEvents?.data?.data?.map((event) => (
                 <EventCard key={event._id} item={event} />
               ))}
             </div>
@@ -306,7 +306,7 @@ function OrganizerProfile() {
 
                   return Array.from(
                     { length: end - start + 1 },
-                    (_, i) => start + i
+                    (_, i) => start + i,
                   ).map((num) => (
                     <li key={num}>
                       <button

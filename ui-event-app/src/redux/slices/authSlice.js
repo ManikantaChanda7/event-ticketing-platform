@@ -1,5 +1,4 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import axios from "axios";
 import api from "../../utils/api";
 
 export const loginUser = createAsyncThunk(
@@ -11,7 +10,7 @@ export const loginUser = createAsyncThunk(
     } catch (error) {
       return rejectWithValue(error.response.data);
     }
-  }
+  },
 );
 
 export const registerUser = createAsyncThunk(
@@ -22,10 +21,10 @@ export const registerUser = createAsyncThunk(
       return res.data; // return response (success message, user data, etc.)
     } catch (err) {
       return rejectWithValue(
-        err.response?.data || "Registration failed. Try again."
+        err.response?.data || "Registration failed. Try again.",
       );
     }
-  }
+  },
 );
 
 export const loginOAuthUser = createAsyncThunk(
@@ -38,7 +37,7 @@ export const loginOAuthUser = createAsyncThunk(
     } catch (error) {
       return rejectWithValue(error.response?.data || "OAuth login failed");
     }
-  }
+  },
 );
 
 export const fetchUserProfile = createAsyncThunk(
@@ -47,24 +46,32 @@ export const fetchUserProfile = createAsyncThunk(
     try {
       const res = await api.get(`/user/profile`);
       return res.data;
-    } catch (err) {
+    } catch {
       return rejectWithValue("Failed to load user data");
     }
-  }
+  },
 );
 
 export const updateUserInterests = createAsyncThunk(
   "auth/updateUserInterests",
-  async (id, { rejectWithValue }) => {
+  async (eventId, { rejectWithValue, getState }) => {
     try {
-      const response = await api.put(`user/${id}/updateInterests`, {});
-      return response.data;
+      const state = getState();
+      const interestedEvents = state.auth.interestedEvents || [];
+      const isInterested = interestedEvents.includes(eventId);
+
+      // Toggle interest: if interested, remove it; if not, add it
+      await api({
+        method: isInterested ? "delete" : "post",
+        url: `events/${eventId}/interest`,
+      });
+      return { eventId, isInterested: !isInterested };
     } catch (err) {
       return rejectWithValue(
-        err.response?.data?.message || "Failed to update interests"
+        err.response?.data?.message || "Failed to update interests",
       );
     }
-  }
+  },
 );
 
 export const updateUserRole = createAsyncThunk(
@@ -76,7 +83,7 @@ export const updateUserRole = createAsyncThunk(
     } catch (error) {
       return rejectWithValue(error.response?.data || "Failed to update role");
     }
-  }
+  },
 );
 
 const authSlice = createSlice({
@@ -130,13 +137,13 @@ const authSlice = createSlice({
       })
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
-        state.user = action.payload.userId;
-        state.token = action.payload.token;
-        state.interestedEvents = action.payload.userInterests;
+        state.user = action.payload.data.userId;
+        state.token = action.payload.data.token;
+        state.interestedEvents = action.payload.data.userInterests;
         state.isAuthenticated = true;
-        localStorage.setItem("token", action.payload.token);
-        localStorage.setItem("userId", action.payload.userId);
-        localStorage.setItem("role", action.payload.userRole);
+        localStorage.setItem("token", action.payload.data.token);
+        localStorage.setItem("userId", action.payload.data.userId);
+        localStorage.setItem("role", action.payload.data.userRole);
       })
       .addCase(loginUser.rejected, (state, action) => {
         state.loading = false;
@@ -154,11 +161,11 @@ const authSlice = createSlice({
         state.registerLoading = false;
         state.registerSuccess = true;
         state.isAuthenticated = true;
-        state.user = action.payload.userId;
-        state.token = action.payload.token;
-        localStorage.setItem("token", action.payload.token);
-        localStorage.setItem("userId", action.payload.userId);
-        localStorage.setItem("role", action.payload.userRole);
+        state.user = action.payload.data.userId;
+        state.token = action.payload.data.token;
+        localStorage.setItem("token", action.payload.data.token);
+        localStorage.setItem("userId", action.payload.data.userId);
+        localStorage.setItem("role", action.payload.data.userRole);
       })
       .addCase(registerUser.rejected, (state, action) => {
         state.registerLoading = false;
@@ -184,7 +191,7 @@ const authSlice = createSlice({
         state.updateRoleLoading = true;
         state.updateRoleError = null;
       })
-      .addCase(updateUserRole.fulfilled, (state, action) => {
+      .addCase(updateUserRole.fulfilled, (state) => {
         state.updateRoleLoading = false;
         state.isAuthenticated = true;
         state.updateRoleSuccess = true;
@@ -202,7 +209,14 @@ const authSlice = createSlice({
       .addCase(updateUserInterests.fulfilled, (state, action) => {
         state.updateInterestsLoading = false;
         state.updateInterestsSuccess = true;
-        state.interestedEvents = action.payload.data.interestedEvents;
+        const { eventId, isInterested } = action.payload;
+        if (isInterested) {
+          state.interestedEvents = [...state.interestedEvents, eventId];
+        } else {
+          state.interestedEvents = state.interestedEvents.filter(
+            (id) => id !== eventId,
+          );
+        }
       })
       .addCase(updateUserInterests.rejected, (state, action) => {
         state.updateInterestsLoading = false;
@@ -217,13 +231,13 @@ const authSlice = createSlice({
         state.loading = false;
         state.isAuthenticated = true;
 
-        state.user = action.payload.userId;
-        state.token = action.payload.token;
-        state.interestedEvents = action.payload.userInterests;
+        state.user = action.payload.data.userId;
+        state.token = action.payload.data.token;
+        state.interestedEvents = action.payload.data.userInterests;
 
-        localStorage.setItem("token", action.payload.token);
-        localStorage.setItem("userId", action.payload.userId);
-        localStorage.setItem("role", action.payload.userRole);
+        localStorage.setItem("token", action.payload.data.token);
+        localStorage.setItem("userId", action.payload.data.userId);
+        localStorage.setItem("role", action.payload.data.userRole);
       })
       .addCase(loginOAuthUser.rejected, (state, action) => {
         state.loading = false;

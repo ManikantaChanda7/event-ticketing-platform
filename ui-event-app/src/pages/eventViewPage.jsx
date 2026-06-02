@@ -1,25 +1,28 @@
 import { Bookmark, BookmarkCheck } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import EventGridShow from "../components/eventGridShow";
 
 import { format } from "date-fns";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence } from "framer-motion";
 import { useDispatch, useSelector } from "react-redux";
 import NoData from "../components/noData";
 import { updateUserInterests } from "../redux/slices/authSlice";
 import {
+  fetchEventById,
+  fetchEventReviews,
   fetchSessionsCount,
   fetchSimilarEvents,
   updateInterestedUsers,
-  updateSelectedEvent,
   writeReview,
+  setReviewSuccessStatus,
 } from "../redux/slices/eventSlice";
 import { fetchOrganizer } from "../redux/slices/organizerProfileSlice";
 import { isUserBookedEvent } from "../redux/slices/userSlice";
 
 export default function Component() {
   const navigate = useNavigate();
+  const { id } = useParams();
   const dispatch = useDispatch();
 
   const { organizer } = useSelector((state) => state.organizerProfile);
@@ -59,14 +62,21 @@ export default function Component() {
   };
 
   const formatEventDateShort = () => {
+    if (!selectedEvent?.startDate) return "TBD";
+
     const start = new Date(selectedEvent?.startDate);
     const end = selectedEvent?.endDate
       ? new Date(selectedEvent?.endDate)
       : null;
-    const time = format(
-      new Date(`2000-01-01T${selectedEvent?.startTime}`),
-      "h.mm a"
-    );
+
+    // Validate dates
+    if (isNaN(start.getTime())) return "TBD";
+    if (end && isNaN(end.getTime())) return "TBD";
+
+    // const time = format(
+    //   new Date(`2000-01-01T${selectedEvent?.startTime}`),
+    //   "h.mm a",
+    // );
     const weekdayOrder = [
       "Sunday",
       "Monday",
@@ -84,7 +94,7 @@ export default function Component() {
         return `${format(start, "MMM d")} – ${format(end, "MMM d")}`;
       case "daily":
         return `Daily (${format(start, "MMM d")} – ${format(end, "MMM d")})`;
-      case "weekly":
+      case "weekly": {
         const days = selectedEvent?.selectedWeekdays?.length
           ? [...selectedEvent.selectedWeekdays]
               .sort((a, b) => weekdayOrder.indexOf(a) - weekdayOrder.indexOf(b)) // sort correctly
@@ -96,12 +106,13 @@ export default function Component() {
           return days
             ? `Weekly (${format(start, "MMM d")} – ${format(
                 end,
-                "MMM d"
+                "MMM d",
               )}) - ${days}`
             : `Weekly (${format(start, "MMM d")} – ${format(end, "MMM d")})`;
         }
 
         return days ? `Weekly — ${days}` : "Weekly";
+      }
 
       default:
         return format(start, "EEE, MMM d");
@@ -109,8 +120,10 @@ export default function Component() {
   };
 
   const formatTime = (timeString) => {
+    if (!timeString) return "TBD";
     // Ensure it's always parsed into a Date
     const date = new Date(`2000-01-01T${timeString}`);
+    if (isNaN(date.getTime())) return "TBD";
     return format(date, "h:mm a"); // → 1:30 PM, 9:00 AM
   };
 
@@ -121,16 +134,16 @@ export default function Component() {
     }
 
     try {
-      const result = await dispatch(
+      await dispatch(
         writeReview({
           eventId: selectedEvent._id,
           rating: userRating,
           review: userReview,
-        })
+        }),
       ).unwrap();
 
-      // Update event in UI using returned updated event
-      dispatch(updateSelectedEvent(result.data));
+      // Refresh reviews for the event instead of updating entire event
+      dispatch(fetchEventReviews(selectedEvent._id)).unwrap();
 
       // close form
       setShowReviewInput(false);
@@ -140,6 +153,11 @@ export default function Component() {
       console.error("Review submit error:", err);
     }
   };
+
+  // Reset review success state on component mount to prevent stale toast
+  useEffect(() => {
+    dispatch(setReviewSuccessStatus(false));
+  }, []);
 
   useEffect(() => {
     const fetchSessionCount = async () => {
@@ -153,19 +171,64 @@ export default function Component() {
     if (selectedEvent?._id) {
       fetchSessionCount();
     }
-  }, [selectedEvent]);
+  }, [selectedEvent?._id, dispatch]);
+
+  // Fetch full event details by ID when component mounts
+  useEffect(() => {
+    if (id) {
+      dispatch(fetchEventById(id)).unwrap();
+    }
+  }, [id, dispatch]);
+
+  // Fetch reviews for the event
+  useEffect(() => {
+    if (selectedEvent?._id) {
+      dispatch(fetchEventReviews(selectedEvent._id)).unwrap();
+    }
+  }, [selectedEvent?._id, dispatch]);
 
   useEffect(() => {
+    // Determine if booking button should be enabled based on event status and sessions
+    if (selectedEvent?.status?.toUpperCase() === "COMPLETED") {
+      setSessionAvailable(false);
+      return;
+    }
+
+    if (selectedEvent?.status?.toUpperCase() === "ONGOING") {
+      setSessionAvailable(true);
+      return;
+    }
+
+    // For UPCOMING events, check if any session has released tickets
+    if (selectedEvent?.status?.toUpperCase() === "UPCOMING") {
+      const now = new Date();
+      const hasReleasedTickets = selectedEvent?.sessions?.some((session) => {
+        if (!session?.releaseDate) return false;
+        return new Date(session.releaseDate) <= now;
+      });
+      setSessionAvailable(hasReleasedTickets);
+      return;
+    }
+
+    // Fallback to the old behavior for other statuses
     setSessionAvailable(selectedEventSessionsAvailable);
-  }, [selectedEventSessionsAvailable]);
+  }, [
+    selectedEvent?.status,
+    selectedEvent?.sessions,
+    selectedEventSessionsAvailable,
+  ]);
 
   useEffect(() => {
     const eventId = selectedEvent?._id;
+    const organizerId =
+      selectedEvent?.organizer?.id || selectedEvent?.organizer?._id;
     if (!eventId) return;
-    dispatch(fetchOrganizer(selectedEvent?.organizer)).unwrap();
+    if (organizerId) {
+      dispatch(fetchOrganizer(organizerId)).unwrap();
+    }
     dispatch(isUserBookedEvent(eventId)).unwrap();
     dispatch(
-      fetchSimilarEvents({ key: "similarEvents", id: eventId })
+      fetchSimilarEvents({ key: "similarEvents", id: eventId }),
     ).unwrap();
   }, [dispatch, selectedEvent?._id]);
 
@@ -460,7 +523,7 @@ export default function Component() {
 
                     return (
                       <div
-                        key={review._id}
+                        key={review.id || review._id}
                         className={`${
                           idx !==
                           Math.min(3, selectedEvent?.ratings?.length) - 1
@@ -473,30 +536,31 @@ export default function Component() {
                           <div className="flex items-center gap-3 max-sm:gap-2">
                             <div className="w-10 h-10 max-sm:w-8 max-sm:h-8 bg-gray-200 rounded-full overflow-hidden">
                               <img
-                                src={user.userProfileImage}
+                                src={user?.userProfileImage}
                                 onError={(e) => {
                                   e.currentTarget.src =
                                     "https://ui-avatars.com/api/?background=random&name=" +
-                                    user.username;
+                                    user?.username;
                                 }}
-                                alt={user.username}
+                                alt={user?.username}
                                 className="w-full h-full object-cover"
                               />
                             </div>
 
                             <div>
                               <p className="font-medium text-gray-800 text-sm max-sm:text-[13px]">
-                                {user.username}
+                                {user?.username}
                               </p>
                               <p className="text-sm max-sm:text-xs text-gray-500">
-                                {new Date(review.createdAt).toLocaleDateString(
-                                  "en-US",
-                                  {
-                                    month: "short",
-                                    day: "numeric",
-                                    year: "numeric",
-                                  }
-                                )}
+                                {review.createdAt &&
+                                  new Date(review.createdAt).toLocaleDateString(
+                                    "en-US",
+                                    {
+                                      month: "short",
+                                      day: "numeric",
+                                      year: "numeric",
+                                    },
+                                  )}
                               </p>
                             </div>
                           </div>
@@ -589,7 +653,7 @@ export default function Component() {
                                 key={star}
                                 onClick={() =>
                                   setFilterRating(
-                                    filterRating === star ? null : star
+                                    filterRating === star ? null : star,
                                   )
                                 }
                                 className={`
@@ -619,7 +683,7 @@ export default function Component() {
 
                                 return (
                                   <div
-                                    key={review._id}
+                                    key={review.id || review._id}
                                     className="pb-6 max-sm:pb-4 border-b last:border-b-0 border-gray-200"
                                   >
                                     <div className="flex justify-between items-start mb-2 max-sm:mb-1">
@@ -627,29 +691,30 @@ export default function Component() {
                                       <div className="flex items-center gap-3 max-sm:gap-2">
                                         <div className="w-10 h-10 max-sm:w-8 max-sm:h-8 rounded-full overflow-hidden bg-gray-200 shadow-inner">
                                           <img
-                                            src={user.userProfileImage}
+                                            src={user?.userProfileImage}
                                             onError={(e) => {
                                               e.currentTarget.src =
                                                 "https://ui-avatars.com/api/?background=random&name=" +
-                                                user.username;
+                                                user?.username;
                                             }}
-                                            alt={user.username}
+                                            alt={user?.username}
                                             className="w-full h-full object-cover"
                                           />
                                         </div>
 
                                         <div>
                                           <p className="font-semibold text-gray-900 text-sm max-sm:text-[13px]">
-                                            {user.username}
+                                            {user?.username}
                                           </p>
                                           <p className="text-sm max-sm:text-xs text-gray-500">
-                                            {new Date(
-                                              review.createdAt
-                                            ).toLocaleDateString("en-US", {
-                                              month: "short",
-                                              day: "numeric",
-                                              year: "numeric",
-                                            })}
+                                            {review.createdAt &&
+                                              new Date(
+                                                review.createdAt,
+                                              ).toLocaleDateString("en-US", {
+                                                month: "short",
+                                                day: "numeric",
+                                                year: "numeric",
+                                              })}
                                           </p>
                                         </div>
                                       </div>
@@ -845,7 +910,9 @@ export default function Component() {
                     </p>
                     <div className="flex items-center gap-1.5">
                       <p className="text-gray-700 font-medium max-sm:text-sm">
-                        {selectedEvent?.location.label}
+                        {selectedEvent?.location?.label ||
+                          selectedEvent?.locationLabel ||
+                          "TBD"}
                       </p>
 
                       {selectedEvent?.location?.coordinates && (
@@ -854,7 +921,7 @@ export default function Component() {
                             onClick={() =>
                               window.open(
                                 `https://www.google.com/maps?q=${selectedEvent?.location.coordinates[1]},${selectedEvent?.location.coordinates[0]}`,
-                                "_blank"
+                                "_blank",
                               )
                             }
                             className="flex items-center justify-center cursor-pointer"
@@ -946,20 +1013,22 @@ export default function Component() {
                 </div>
                 <button
                   onClick={
-                    selectedEvent?.status !== "completed" && sessionAvailable
+                    selectedEvent?.status?.toUpperCase() !== "COMPLETED" &&
+                    sessionAvailable
                       ? () =>
                           navigate("/event/" + selectedEvent._id + "/sessions")
                       : undefined
                   }
                   className={`w-full font-bold py-3 max-sm:py-2 max-sm:text-sm px-4 rounded-lg shadow flex items-center justify-center gap-2 mb-2 transition-all duration-300
     ${
-      selectedEvent?.status === "completed" || !sessionAvailable
+      selectedEvent?.status?.toUpperCase() === "COMPLETED" || !sessionAvailable
         ? "bg-gray-400 cursor-not-allowed text-gray-200"
         : "text-white cursor-pointer"
     }
   `}
                   style={
-                    selectedEvent?.status !== "completed" && sessionAvailable
+                    selectedEvent?.status?.toUpperCase() !== "COMPLETED" &&
+                    sessionAvailable
                       ? {
                           background:
                             "linear-gradient(90deg, #ff512f, #dd2476)",
@@ -970,11 +1039,11 @@ export default function Component() {
                   <span className="material-symbols-outlined">
                     confirmation_number
                   </span>
-                  {selectedEvent?.status === "completed"
+                  {selectedEvent?.status?.toUpperCase() === "COMPLETED"
                     ? "Event Completed"
                     : sessionAvailable
-                    ? "Buy Tickets"
-                    : "Bookings Opening Soon"}
+                      ? "Buy Tickets"
+                      : "Bookings Opening Soon"}
                 </button>
 
                 <p className="text-sm text-gray-500 text-center">

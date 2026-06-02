@@ -32,9 +32,9 @@ public class Booking extends BaseEntity {
     private Session session;
 
     @ElementCollection
-    @CollectionTable(name = "booking_seats", joinColumns = @JoinColumn(name = "booking_id"))
-    @AttributeOverride(name = "seatId", column = @Column(name = "seat_id"))
-    @AttributeOverride(name = "section", column = @Column(name = "section"))
+    @CollectionTable(name = "booking_seats_embedded", joinColumns = @JoinColumn(name = "booking_id"))
+    @AttributeOverride(name = "seatId", column = @Column(name = "seat_id", columnDefinition = "VARCHAR(255)"))
+    @AttributeOverride(name = "section", column = @Column(name = "section", columnDefinition = "VARCHAR(255)"))
     @AttributeOverride(name = "price", column = @Column(name = "price"))
     private List<BookedSeat> seats;
 

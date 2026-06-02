@@ -8,7 +8,7 @@ export const fetchHomeEvents = createAsyncThunk(
       withCredentials: true,
     });
     return response.data;
-  }
+  },
 );
 
 export const fetchPopularEvents = createAsyncThunk(
@@ -21,10 +21,10 @@ export const fetchPopularEvents = createAsyncThunk(
       return response.data;
     } catch (err) {
       return rejectWithValue(
-        err.response?.data?.message || "Failed to load popular events"
+        err.response?.data?.message || "Failed to load popular events",
       );
     }
-  }
+  },
 );
 
 export const fetchTrendingEvents = createAsyncThunk(
@@ -38,10 +38,10 @@ export const fetchTrendingEvents = createAsyncThunk(
       return response.data;
     } catch (err) {
       return rejectWithValue(
-        err.response?.data?.message || "Failed to load trending events"
+        err.response?.data?.message || "Failed to load trending events",
       );
     }
-  }
+  },
 );
 
 export const fetchRecommendedEvents = createAsyncThunk(
@@ -54,19 +54,19 @@ export const fetchRecommendedEvents = createAsyncThunk(
       return response.data;
     } catch (err) {
       return rejectWithValue(
-        err.response?.data?.message || "Failed to load recommended events"
+        err.response?.data?.message || "Failed to load recommended events",
       );
     }
-  }
+  },
 );
 
 // Fetch single event venue
 export const fetchEventVenue = createAsyncThunk(
   "event/fetchEventVenue",
   async (venueId) => {
-    const response = await api.get(`venue/${venueId}`);
+    const response = await api.get(`venues/${venueId}`);
     return response.data;
-  }
+  },
 );
 
 // Fetch filtered events dynamically
@@ -82,18 +82,46 @@ export const fetchFilteredEvents = createAsyncThunk(
       return { key: query.key, data: response.data };
     } catch (err) {
       return rejectWithValue(
-        err.response?.data?.message || "Failed to fetch filtered events"
+        err.response?.data?.message || "Failed to fetch filtered events",
       );
     }
-  }
+  },
 );
 
 export const fetchSimilarEvents = createAsyncThunk(
   "events/fetchSimilarEvents",
   async (query) => {
     const response = await api.get(`events/${query.id}/similarEvents`);
-    return { key: query.key, data: response.data };
-  }
+    return { key: query.key, data: response.data.data };
+  },
+);
+
+export const fetchEventById = createAsyncThunk(
+  "event/fetchEventById",
+  async (eventId, { rejectWithValue }) => {
+    try {
+      const response = await api.get(`events/${eventId}`);
+      return response.data;
+    } catch (err) {
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to fetch event details",
+      );
+    }
+  },
+);
+
+export const fetchEventReviews = createAsyncThunk(
+  "event/fetchEventReviews",
+  async (eventId, { rejectWithValue }) => {
+    try {
+      const response = await api.get(`reviews/event/${eventId}`);
+      return response.data;
+    } catch (err) {
+      return rejectWithValue(
+        err.response?.data?.message || "Failed to fetch event reviews",
+      );
+    }
+  },
 );
 
 export const fetchUserInterestedEvents = createAsyncThunk(
@@ -103,7 +131,7 @@ export const fetchUserInterestedEvents = createAsyncThunk(
       params: query.params,
     });
     return { key: query.key, data: response.data };
-  }
+  },
 );
 
 export const updateEventTitle = createAsyncThunk(
@@ -117,7 +145,7 @@ export const updateEventTitle = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(err.response?.data || "Event name update failed");
     }
-  }
+  },
 );
 
 export const bookTickets = createAsyncThunk(
@@ -133,28 +161,29 @@ export const bookTickets = createAsyncThunk(
       return response.data; // booking confirmation
     } catch (error) {
       return rejectWithValue(
-        error.response?.data || "Booking failed. Please try again."
+        error.response?.data || "Booking failed. Please try again.",
       );
     }
-  }
+  },
 );
 
 export const writeReview = createAsyncThunk(
   "event/writeReview",
   async ({ eventId, rating, review }, { rejectWithValue }) => {
     try {
-      const response = await api.post(`events/${eventId}/writeReview`, {
+      const response = await api.post(`reviews`, {
+        eventId,
         rating,
-        review,
+        comment: review,
       });
 
       return response.data; // backend response
     } catch (err) {
       return rejectWithValue(
-        err.response?.data || "Failed to submit review. Try again."
+        err.response?.data || "Failed to submit review. Try again.",
       );
     }
-  }
+  },
 );
 
 export const fetchSessionsCount = createAsyncThunk(
@@ -165,10 +194,10 @@ export const fetchSessionsCount = createAsyncThunk(
       return res.data; // return backend response
     } catch (err) {
       return rejectWithValue(
-        err.response?.data || "Failed to fetch sessions count"
+        err.response?.data || "Failed to fetch sessions count",
       );
     }
-  }
+  },
 );
 
 export const createEvent = createAsyncThunk(
@@ -180,7 +209,7 @@ export const createEvent = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(err.response?.data || "Failed to create event");
     }
-  }
+  },
 );
 
 export const getCategories = createAsyncThunk(
@@ -191,17 +220,17 @@ export const getCategories = createAsyncThunk(
       return res.data.categories; // return categories array
     } catch (err) {
       return rejectWithValue(
-        err.response?.data || "Failed to fetch categories"
+        err.response?.data || "Failed to fetch categories",
       );
     }
-  }
+  },
 );
 
 export const updateEventImage = createAsyncThunk(
   "event/updateEventImage",
   async ({ eventId, type, url }, { rejectWithValue }) => {
     try {
-      const res = await api.put(`events/${eventId}/updateEventImage`, {
+      await api.put(`events/${eventId}/updateEventImage`, {
         type, // "banner" or "thumbnail"
         url,
       });
@@ -209,10 +238,10 @@ export const updateEventImage = createAsyncThunk(
       return { eventId, type, url }; // return updated details
     } catch (err) {
       return rejectWithValue(
-        err.response?.data || "Failed to update event image"
+        err.response?.data || "Failed to update event image",
       );
     }
-  }
+  },
 );
 
 export const fetchVenueAvailability = createAsyncThunk(
@@ -229,10 +258,10 @@ export const fetchVenueAvailability = createAsyncThunk(
       return res.data.data || []; // return venue list only
     } catch (err) {
       return rejectWithValue(
-        err.response?.data || "Failed to fetch venue availability"
+        err.response?.data || "Failed to fetch venue availability",
       );
     }
-  }
+  },
 );
 
 export const fetchVenueInfo = createAsyncThunk(
@@ -244,10 +273,10 @@ export const fetchVenueInfo = createAsyncThunk(
       return res.data.data; // return venue list only
     } catch (err) {
       return rejectWithValue(
-        err.response?.data || "Failed to fetch venue availability"
+        err.response?.data || "Failed to fetch venue availability",
       );
     }
-  }
+  },
 );
 
 const initialState = {
@@ -263,6 +292,8 @@ const initialState = {
   categories: [],
 
   selectedEvent: null,
+  selectedEventLoading: false,
+  selectedEventError: null,
   selectedEventVenue: null,
   selectedEventSessionsAvailable: false,
   eventVenueLoading: false,
@@ -449,12 +480,43 @@ export const eventSlice = createSlice({
         state.similarError = action.payload;
       })
 
+      // fetchEventById
+      .addCase(fetchEventById.pending, (state) => {
+        state.selectedEventLoading = true;
+        state.selectedEventError = null;
+      })
+      .addCase(fetchEventById.fulfilled, (state, action) => {
+        state.selectedEventLoading = false;
+        state.selectedEvent = action.payload.data;
+      })
+      .addCase(fetchEventById.rejected, (state, action) => {
+        state.selectedEventLoading = false;
+        state.selectedEventError = action.payload;
+      })
+
+      // fetchEventReviews
+      .addCase(fetchEventReviews.pending, (state) => {
+        state.reviewLoader = true;
+        state.reviewError = null;
+      })
+      .addCase(fetchEventReviews.fulfilled, (state, action) => {
+        state.reviewLoader = false;
+        state.selectedEvent = {
+          ...state.selectedEvent,
+          ratings: action.payload.data,
+        };
+      })
+      .addCase(fetchEventReviews.rejected, (state, action) => {
+        state.reviewLoader = false;
+        state.reviewError = action.payload;
+      })
+
       .addCase(bookTickets.pending, (state) => {
         state.bookingLoader = true;
         state.bookingSuccess = false;
         state.bookingError = null;
       })
-      .addCase(bookTickets.fulfilled, (state, action) => {
+      .addCase(bookTickets.fulfilled, (state) => {
         state.bookingLoader = false;
         state.bookingSuccess = true;
       })
@@ -472,7 +534,8 @@ export const eventSlice = createSlice({
       .addCase(fetchSessionsCount.fulfilled, (state, action) => {
         state.sessionsCountLoading = false;
         state.sessionsCountSuccess = true;
-        state.selectedEventSessionsAvailable = action.payload.sessionsAvailable; // backend returns {count: X}
+        state.selectedEventSessionsAvailable =
+          action.payload.data.sessionsAvailable;
       })
       .addCase(fetchSessionsCount.rejected, (state, action) => {
         state.sessionsCountLoading = false;
@@ -484,7 +547,7 @@ export const eventSlice = createSlice({
         state.reviewSuccess = false;
         state.reviewError = null;
       })
-      .addCase(writeReview.fulfilled, (state, action) => {
+      .addCase(writeReview.fulfilled, (state) => {
         state.reviewLoader = false;
         state.reviewSuccess = true;
       })
@@ -499,7 +562,7 @@ export const eventSlice = createSlice({
         state.updateImageLoading = true;
         state.updateImageError = null;
       })
-      .addCase(updateEventImage.fulfilled, (state, action) => {
+      .addCase(updateEventImage.fulfilled, (state) => {
         state.updateImageLoading = false;
         state.updateImageSuccess = true;
       })
@@ -513,7 +576,7 @@ export const eventSlice = createSlice({
         state.updateTitleLoading = true;
         state.updateTitleError = null;
       })
-      .addCase(updateEventTitle.fulfilled, (state, action) => {
+      .addCase(updateEventTitle.fulfilled, (state) => {
         state.updateTitleLoading = false;
         state.updateTitleSuccess = true;
       })
@@ -527,7 +590,7 @@ export const eventSlice = createSlice({
         state.createEventError = null;
         state.createEventSuccess = false;
       })
-      .addCase(createEvent.fulfilled, (state, action) => {
+      .addCase(createEvent.fulfilled, (state) => {
         state.createEventLoading = false;
         state.createEventSuccess = true;
       })
@@ -573,4 +636,5 @@ export const {
   setBookingSuccessStatus,
   updateInterestedUsers,
 } = eventSlice.actions;
+
 export const eventReducer = eventSlice.reducer;

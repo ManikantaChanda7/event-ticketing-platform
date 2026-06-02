@@ -21,7 +21,7 @@ function TicketModal({ ticket, onClose }) {
         .map((s) => `${s.section} • ${s.seatIds.join(", ")}`)
         .join(" | ")}`,
       20,
-      70
+      70,
     );
     doc.text(`Total Paid: ₹${ticket.totalAmount}`, 20, 85);
 
@@ -97,7 +97,7 @@ function TicketModal({ ticket, onClose }) {
                   dateStyle: "medium",
                 })}{" "}
                 {new Date(
-                  `1970-01-01T${ticket.startTime}:00`
+                  `1970-01-01T${ticket.startTime}:00`,
                 ).toLocaleTimeString([], {
                   hour: "2-digit",
                   minute: "2-digit",
@@ -263,7 +263,7 @@ function TicketCard({ ticket, onOpen }) {
             })}{" "}
             {new Date(`1970-01-01T${ticket.startTime}:00`).toLocaleTimeString(
               [],
-              { hour: "2-digit", minute: "2-digit", hour12: true }
+              { hour: "2-digit", minute: "2-digit", hour12: true },
             )}
           </p>
 
@@ -320,13 +320,14 @@ export default function MyTicketsStyled() {
   }, [dispatch]);
 
   useEffect(() => {
-    const now = new Date(); // current date + time
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    if (!userBookings || !Array.isArray(userBookings)) {
+      setTickets([]);
+      return;
+    }
 
     const mapped = userBookings.map((b) => {
-      const sessionDate = new Date(b.session.date);
-      const sessionTime = b.session.startTime; // format example: "14:30"
+      const sessionDate = new Date(b.session?.date || new Date());
+      const sessionTime = b.session?.startTime || "00:00"; // format example: "14:30"
 
       // combine date + time for exact comparison
       const [hours, minutes] = sessionTime.split(":").map(Number);
@@ -338,26 +339,28 @@ export default function MyTicketsStyled() {
         return acc;
       }, {});
 
+      // Use booking status field instead of date
       let status = "upcoming";
-
-      // Check full timestamp
-      if (sessionDate < now) {
+      if (b.status === "CANCELLED" || b.status === "REFUNDED") {
         status = "past";
       }
 
       return {
         id: b._id,
-        title: b.event.title,
-        date: b.session.date,
-        venue: b.event.location.label,
-        startTime: b.session.startTime,
+        title: b.event?.title || "Event",
+        date: b.session?.date,
+        venue: b.event?.location?.label || "Venue",
+        startTime: b.session?.startTime,
         seats: Object.entries(groupedSeats).map(([section, ids]) => ({
           section,
           seatIds: ids,
         })),
-        code: b._id.slice(-6).toUpperCase(),
-        bannerImage: b.event.bannerImage,
-        thumbnailImage: b.event.thumbnailImage,
+        code:
+          String(b._id || "")
+            .slice(-6)
+            .toUpperCase() || "CODE",
+        bannerImage: b.event?.bannerImage,
+        thumbnailImage: b.event?.thumbnailImage,
         status,
         totalAmount: b.totalAmount,
       };

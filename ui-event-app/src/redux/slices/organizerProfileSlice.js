@@ -5,9 +5,9 @@ import api from "../../utils/api";
 export const fetchOrganizer = createAsyncThunk(
   "organizerProfile/fetchOrganizer",
   async (organizerId) => {
-    let response = await api.get(`organizer/profile/${organizerId}`);
+    let response = await api.get(`organizers/${organizerId}`);
     return response.data;
-  }
+  },
 );
 
 export const fetchOrganizerEvents = createAsyncThunk(
@@ -17,7 +17,7 @@ export const fetchOrganizerEvents = createAsyncThunk(
       params: query,
     });
     return response.data;
-  }
+  },
 );
 
 export const updateOrganizerProfile = createAsyncThunk(
@@ -29,7 +29,7 @@ export const updateOrganizerProfile = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(err.response?.data || "Update failed");
     }
-  }
+  },
 );
 
 // 3️⃣ Update Password
@@ -42,7 +42,7 @@ export const updateOrganizerPassword = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(err.response?.data || "Password update failed");
     }
-  }
+  },
 );
 
 export const getDashboardStats = createAsyncThunk(
@@ -54,7 +54,7 @@ export const getDashboardStats = createAsyncThunk(
     } catch (err) {
       return rejectWithValue(err.response?.data || "Failed to fetch stats");
     }
-  }
+  },
 );
 
 export const getManageEventData = createAsyncThunk(
@@ -65,10 +65,10 @@ export const getManageEventData = createAsyncThunk(
       return res.data;
     } catch (err) {
       return rejectWithValue(
-        err.response?.data || "Failed to fetch event data"
+        err.response?.data || "Failed to fetch event data",
       );
     }
-  }
+  },
 );
 
 export const getOrganizerEvents = createAsyncThunk(
@@ -79,10 +79,10 @@ export const getOrganizerEvents = createAsyncThunk(
       return res.data;
     } catch (err) {
       return rejectWithValue(
-        err.response?.data || "Failed to fetch organizer events"
+        err.response?.data || "Failed to fetch organizer events",
       );
     }
-  }
+  },
 );
 
 export const getOrganizerProfileByUserId = createAsyncThunk(
@@ -93,10 +93,10 @@ export const getOrganizerProfileByUserId = createAsyncThunk(
       return res.data.data; // return the actual data object
     } catch (err) {
       return rejectWithValue(
-        err.response?.data || "Failed to fetch organizer profile"
+        err.response?.data || "Failed to fetch organizer profile",
       );
     }
-  }
+  },
 );
 
 export const getOrganizerBasicStats = createAsyncThunk(
@@ -104,7 +104,7 @@ export const getOrganizerBasicStats = createAsyncThunk(
   async (_, thunkAPI) => {
     const res = await api.get("/organizer/dashboard/basic");
     return res.data;
-  }
+  },
 );
 
 export const getOrganizerSalesStats = createAsyncThunk(
@@ -112,7 +112,7 @@ export const getOrganizerSalesStats = createAsyncThunk(
   async (_, thunkAPI) => {
     const res = await api.get("/organizer/dashboard/sales");
     return res.data;
-  }
+  },
 );
 
 export const getOrganizerCategoryStats = createAsyncThunk(
@@ -120,7 +120,7 @@ export const getOrganizerCategoryStats = createAsyncThunk(
   async (_, thunkAPI) => {
     const res = await api.get("/organizer/dashboard/categories");
     return res.data;
-  }
+  },
 );
 
 export const getOrganizerTopSellingEvents = createAsyncThunk(
@@ -128,7 +128,7 @@ export const getOrganizerTopSellingEvents = createAsyncThunk(
   async (_, thunkAPI) => {
     const res = await api.get("/organizer/dashboard/top-selling");
     return res.data;
-  }
+  },
 );
 
 export const getOrganizerUpcomingEvents = createAsyncThunk(
@@ -136,7 +136,7 @@ export const getOrganizerUpcomingEvents = createAsyncThunk(
   async (_, thunkAPI) => {
     const res = await api.get("/organizer/dashboard/upcoming");
     return res.data;
-  }
+  },
 );
 
 export const organizerProfileSlice = createSlice({
@@ -225,6 +225,7 @@ export const organizerProfileSlice = createSlice({
         state.organizerEventsLoading = false;
         state.organizerEvents = action.payload;
         state.organizerEventsSuccess = true;
+        state.totalPages = action.payload?.data?.totalPages || 1;
       })
       .addCase(fetchOrganizerEvents.rejected, (state, action) => {
         state.organizerEventsLoading = false;
