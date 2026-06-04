@@ -11,6 +11,10 @@ import java.time.LocalDateTime;
 @Setter
 public abstract class BaseEntity {
 
+    @Version
+    @Column(nullable = false)
+    private Long version = 0L;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -19,6 +23,9 @@ public abstract class BaseEntity {
 
     @PrePersist
     protected void onCreate() {
+        if (version == null) {
+            version = 0L;
+        }
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
     }

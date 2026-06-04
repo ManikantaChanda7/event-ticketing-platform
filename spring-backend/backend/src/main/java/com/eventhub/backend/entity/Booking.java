@@ -10,7 +10,12 @@ import java.util.List;
 import com.eventhub.backend.enums.BookingStatus;
 
 @Entity
-@Table(name = "bookings")
+@Table(name = "bookings", indexes = {
+        @Index(name = "idx_booking_user", columnList = "user_id"),
+        @Index(name = "idx_booking_event", columnList = "event_id"),
+        @Index(name = "idx_booking_session", columnList = "session_id"),
+        @Index(name = "idx_booking_status", columnList = "status")
+})
 @Getter
 @Setter
 public class Booking extends BaseEntity {

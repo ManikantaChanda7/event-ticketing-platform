@@ -62,7 +62,7 @@ export const getManageEventData = createAsyncThunk(
   async (eventId, { rejectWithValue }) => {
     try {
       const res = await api.get(`/organizer/manage-event/${eventId}`);
-      return res.data;
+      return res.data.data;
     } catch (err) {
       return rejectWithValue(
         err.response?.data || "Failed to fetch event data",
@@ -76,7 +76,7 @@ export const getOrganizerEvents = createAsyncThunk(
   async (params, { rejectWithValue }) => {
     try {
       const res = await api.get("organizer/events", { params });
-      return res.data;
+      return res.data.data;
     } catch (err) {
       return rejectWithValue(
         err.response?.data || "Failed to fetch organizer events",
@@ -103,7 +103,7 @@ export const getOrganizerBasicStats = createAsyncThunk(
   "organizer/basic",
   async (_, thunkAPI) => {
     const res = await api.get("/organizer/dashboard/basic");
-    return res.data;
+    return res.data.data;
   },
 );
 
@@ -111,7 +111,7 @@ export const getOrganizerSalesStats = createAsyncThunk(
   "organizer/sales",
   async (_, thunkAPI) => {
     const res = await api.get("/organizer/dashboard/sales");
-    return res.data;
+    return res.data.data;
   },
 );
 
@@ -119,7 +119,7 @@ export const getOrganizerCategoryStats = createAsyncThunk(
   "organizer/categories",
   async (_, thunkAPI) => {
     const res = await api.get("/organizer/dashboard/categories");
-    return res.data;
+    return res.data.data;
   },
 );
 
@@ -127,7 +127,7 @@ export const getOrganizerTopSellingEvents = createAsyncThunk(
   "organizer/topSelling",
   async (_, thunkAPI) => {
     const res = await api.get("/organizer/dashboard/top-selling");
-    return res.data;
+    return res.data.data;
   },
 );
 
@@ -135,7 +135,7 @@ export const getOrganizerUpcomingEvents = createAsyncThunk(
   "organizer/upcoming",
   async (_, thunkAPI) => {
     const res = await api.get("/organizer/dashboard/upcoming");
-    return res.data;
+    return res.data.data;
   },
 );
 
@@ -309,7 +309,7 @@ export const organizerProfileSlice = createSlice({
         state.basicLoading = false;
         state.dashboardStats = {
           ...state.dashboardStats,
-          ...action.payload,
+          ...(action.payload || {}),
         };
       })
       .addCase(getOrganizerBasicStats.rejected, (state, action) => {
@@ -326,7 +326,7 @@ export const organizerProfileSlice = createSlice({
         state.salesLoading = false;
         state.dashboardStats = {
           ...state.dashboardStats,
-          ...action.payload,
+          ...(action.payload || {}),
         };
       })
       .addCase(getOrganizerSalesStats.rejected, (state, action) => {
@@ -343,7 +343,7 @@ export const organizerProfileSlice = createSlice({
         state.categoriesLoading = false;
         state.dashboardStats = {
           ...state.dashboardStats,
-          ...action.payload,
+          ...(action.payload || {}),
         };
       })
       .addCase(getOrganizerCategoryStats.rejected, (state, action) => {
@@ -361,7 +361,7 @@ export const organizerProfileSlice = createSlice({
         state.topSellingLoading = false;
         state.dashboardStats = {
           ...state.dashboardStats,
-          topSelling: action.payload.topSelling,
+          topSelling: action.payload?.topSelling || [],
         };
       })
       .addCase(getOrganizerTopSellingEvents.rejected, (state, action) => {
@@ -379,7 +379,7 @@ export const organizerProfileSlice = createSlice({
         state.upcomingLoading = false;
         state.dashboardStats = {
           ...state.dashboardStats,
-          upcomingEvents: action.payload.upcomingEvents,
+          upcomingEvents: action.payload?.upcomingEvents || [],
         };
       })
       .addCase(getOrganizerUpcomingEvents.rejected, (state, action) => {

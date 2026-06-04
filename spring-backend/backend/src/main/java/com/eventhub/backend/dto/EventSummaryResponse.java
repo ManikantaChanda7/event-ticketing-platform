@@ -27,11 +27,15 @@ public class EventSummaryResponse {
 
     private String startTime;
 
+    private String endTime;
+
     private LocationResponse location;
 
     private Double averageRating;
 
     private Integer interestedUsers;
+
+    private String createdAt;
 
     public Long get_id() {
         return _id;

@@ -7,7 +7,9 @@ import lombok.Setter;
 import java.math.BigDecimal;
 
 @Entity
-@Table(name = "ticket_types")
+@Table(name = "ticket_types", indexes = {
+        @Index(name = "idx_ticket_session", columnList = "session_id")
+})
 @Getter
 @Setter
 public class TicketType extends BaseEntity {

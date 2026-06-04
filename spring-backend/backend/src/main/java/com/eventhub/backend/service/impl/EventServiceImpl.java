@@ -139,11 +139,7 @@ public class EventServiceImpl implements EventService {
         @Override
         public List<String> getCategories() {
 
-                return eventRepository.findAll()
-                                .stream()
-                                .map(Event::getCategory)
-                                .distinct()
-                                .toList();
+                return eventRepository.findDistinctCategories();
         }
 
         @Override
@@ -176,6 +172,26 @@ public class EventServiceImpl implements EventService {
         }
 
         @Override
+        public List<EventSummaryResponse> getMyEventsSummary() {
+
+                String email = SecurityContextHolder
+                                .getContext()
+                                .getAuthentication()
+                                .getName();
+
+                User user = userRepository.findByEmail(email)
+                                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+                Organizer organizer = organizerRepository.findByUser(user)
+                                .orElseThrow(() -> new ResourceNotFoundException("Organizer not found"));
+
+                return eventRepository.findByOrganizer(organizer)
+                                .stream()
+                                .map(this::mapToSummary)
+                                .toList();
+        }
+
+        @Override
         public List<EventSummaryResponse> getSimilarEvents(
                         Long eventId) {
 
@@ -183,10 +199,10 @@ public class EventServiceImpl implements EventService {
                                 .orElseThrow(() -> new ResourceNotFoundException(
                                                 "Event not found"));
 
-                return eventRepository
-                                .findTop5ByCategoryAndIdNot(
-                                                event.getCategory(),
-                                                event.getId())
+                return eventRepository.findSimilarEvents(
+                                event.getId(),
+                                event.getCategory(),
+                                event.getOrganizer().getId())
                                 .stream()
                                 .filter(e -> e.getStatus() != EventStatus.COMPLETED)
                                 .map(this::mapToSummary)
@@ -228,33 +244,22 @@ public class EventServiceImpl implements EventService {
                                 .distinct()
                                 .toList();
 
-                System.out.println("Interacted event IDs: " + interactedEventIds);
-                System.out.println("Categories: " + categories);
-                System.out.println("Organizer IDs: " + organizerIds);
+                List<EventSummaryResponse> recommended = eventRepository
 
-                List<EventSummaryResponse> recommended = eventRepository.findAll()
+                                .findRecommendedEvents(
+
+                                                categories,
+
+                                                organizerIds,
+
+                                                interactedEventIds)
+
                                 .stream()
-                                .filter(event -> event.getStatus() != EventStatus.COMPLETED)
-                                .filter(event -> !interactedEventIds.contains(
-                                                event.getId()))
-
-                                .filter(event -> categories.contains(
-                                                event.getCategory())
-                                                ||
-                                                organizerIds.contains(
-                                                                event.getOrganizer()
-                                                                                .getId()))
-
-                                .sorted(
-                                                Comparator.comparing(
-                                                                Event::getInterestedUsers,
-                                                                Comparator.nullsLast(
-                                                                                Integer::compareTo))
-                                                                .reversed())
 
                                 .limit(10)
 
                                 .map(this::mapToSummary)
+
                                 .toList();
 
                 return recommended;
@@ -365,14 +370,10 @@ public class EventServiceImpl implements EventService {
                 user.getInterestedEvents()
                                 .add(event);
 
-                long interestedCount = userRepository.findAll()
-                                .stream()
-                                .filter(u -> u.getInterestedEvents()
-                                                .contains(event))
-                                .count();
-
                 event.setInterestedUsers(
-                                (int) interestedCount);
+                                (event.getInterestedUsers() == null
+                                                ? 0
+                                                : event.getInterestedUsers()) + 1);
 
                 userRepository.save(user);
                 eventRepository.save(event);
@@ -396,14 +397,12 @@ public class EventServiceImpl implements EventService {
                 user.getInterestedEvents()
                                 .remove(event);
 
-                long interestedCount = userRepository.findAll()
-                                .stream()
-                                .filter(u -> u.getInterestedEvents()
-                                                .contains(event))
-                                .count();
-
                 event.setInterestedUsers(
-                                (int) interestedCount);
+                                Math.max(
+                                                0,
+                                                (event.getInterestedUsers() == null
+                                                                ? 0
+                                                                : event.getInterestedUsers()) - 1));
 
                 userRepository.save(user);
                 eventRepository.save(event);

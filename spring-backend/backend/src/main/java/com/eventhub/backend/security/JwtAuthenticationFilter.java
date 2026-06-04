@@ -18,63 +18,70 @@ import java.io.IOException;
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final JwtService jwtService;
-    private final CustomUserDetailsService userDetailsService;
+        private final JwtService jwtService;
+        private final CustomUserDetailsService userDetailsService;
 
-    public JwtAuthenticationFilter(
-            JwtService jwtService,
-            CustomUserDetailsService userDetailsService) {
+        public JwtAuthenticationFilter(
+                        JwtService jwtService,
+                        CustomUserDetailsService userDetailsService) {
 
-        this.jwtService = jwtService;
-        this.userDetailsService = userDetailsService;
-    }
-
-    @Override
-    protected void doFilterInternal(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            FilterChain filterChain)
-            throws ServletException, IOException {
-
-        final String authHeader = request.getHeader("Authorization");
-
-        if (authHeader == null ||
-                !authHeader.startsWith("Bearer ")) {
-
-            filterChain.doFilter(request, response);
-            return;
+                this.jwtService = jwtService;
+                this.userDetailsService = userDetailsService;
         }
 
-        String jwt = authHeader.substring(7);
+        @Override
+        protected void doFilterInternal(
+                        HttpServletRequest request,
+                        HttpServletResponse response,
+                        FilterChain filterChain)
+                        throws ServletException, IOException {
 
-        String email = jwtService.extractUsername(jwt);
+                final String authHeader = request.getHeader("Authorization");
 
-        if (email != null &&
-                SecurityContextHolder.getContext()
-                        .getAuthentication() == null) {
+                if (authHeader == null ||
+                                !authHeader.startsWith("Bearer ")) {
 
-            UserDetails userDetails = userDetailsService
-                    .loadUserByUsername(email);
+                        filterChain.doFilter(request, response);
+                        return;
+                }
 
-            if (jwtService.isTokenValid(
-                    jwt,
-                    userDetails.getUsername())) {
+                String jwt = authHeader.substring(7);
 
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities());
+                String email = null;
 
-                authToken.setDetails(
-                        new WebAuthenticationDetailsSource()
-                                .buildDetails(request));
+                try {
+                        email = jwtService.extractUsername(jwt);
+                } catch (Exception ex) {
+                        filterChain.doFilter(request, response);
+                        return;
+                }
 
-                SecurityContextHolder
-                        .getContext()
-                        .setAuthentication(authToken);
-            }
+                if (email != null &&
+                                SecurityContextHolder.getContext()
+                                                .getAuthentication() == null) {
+
+                        UserDetails userDetails = userDetailsService
+                                        .loadUserByUsername(email);
+
+                        if (jwtService.isTokenValid(
+                                        jwt,
+                                        userDetails.getUsername())) {
+
+                                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                                                userDetails,
+                                                null,
+                                                userDetails.getAuthorities());
+
+                                authToken.setDetails(
+                                                new WebAuthenticationDetailsSource()
+                                                                .buildDetails(request));
+
+                                SecurityContextHolder
+                                                .getContext()
+                                                .setAuthentication(authToken);
+                        }
+                }
+
+                filterChain.doFilter(request, response);
         }
-
-        filterChain.doFilter(request, response);
-    }
 }

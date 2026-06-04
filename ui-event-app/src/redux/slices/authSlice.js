@@ -117,7 +117,8 @@ const authSlice = createSlice({
       state.token = null;
       state.interestedEvents = [];
       state.isAuthenticated = false;
-      localStorage.removeItem("token");
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
       localStorage.removeItem("userId");
       localStorage.removeItem("role");
     },
@@ -138,10 +139,11 @@ const authSlice = createSlice({
       .addCase(loginUser.fulfilled, (state, action) => {
         state.loading = false;
         state.user = action.payload.data.userId;
-        state.token = action.payload.data.token;
+        state.token = action.payload.data.accessToken;
         state.interestedEvents = action.payload.data.userInterests;
         state.isAuthenticated = true;
-        localStorage.setItem("token", action.payload.data.token);
+        localStorage.setItem("accessToken", action.payload.data.accessToken);
+        localStorage.setItem("refreshToken", action.payload.data.refreshToken);
         localStorage.setItem("userId", action.payload.data.userId);
         localStorage.setItem("role", action.payload.data.userRole);
       })
@@ -162,8 +164,9 @@ const authSlice = createSlice({
         state.registerSuccess = true;
         state.isAuthenticated = true;
         state.user = action.payload.data.userId;
-        state.token = action.payload.data.token;
-        localStorage.setItem("token", action.payload.data.token);
+        state.token = action.payload.data.accessToken;
+        localStorage.setItem("accessToken", action.payload.data.accessToken);
+        localStorage.setItem("refreshToken", action.payload.data.refreshToken);
         localStorage.setItem("userId", action.payload.data.userId);
         localStorage.setItem("role", action.payload.data.userRole);
       })
@@ -232,10 +235,11 @@ const authSlice = createSlice({
         state.isAuthenticated = true;
 
         state.user = action.payload.data.userId;
-        state.token = action.payload.data.token;
+        state.token = action.payload.data.accessToken;
         state.interestedEvents = action.payload.data.userInterests;
 
-        localStorage.setItem("token", action.payload.data.token);
+        localStorage.setItem("accessToken", action.payload.data.accessToken);
+        localStorage.setItem("refreshToken", action.payload.data.refreshToken);
         localStorage.setItem("userId", action.payload.data.userId);
         localStorage.setItem("role", action.payload.data.userRole);
       })

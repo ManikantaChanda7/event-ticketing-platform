@@ -37,6 +37,14 @@ public class UserController {
                 return new ApiResponse<>(true, "Profile updated successfully", response);
         }
 
+        @PutMapping("/update-profile")
+        public ApiResponse<ProfileResponse> updateProfileAlias(
+                        Authentication authentication,
+                        @RequestBody UpdateProfileRequest request) {
+                ProfileResponse response = userService.updateProfile(authentication.getName(), request);
+                return new ApiResponse<>(true, "Profile updated successfully", response);
+        }
+
         @PutMapping("/change-password")
         public ApiResponse<Void> changePassword(
                         Authentication authentication,

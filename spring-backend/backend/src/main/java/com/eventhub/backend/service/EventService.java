@@ -18,6 +18,8 @@ public interface EventService {
 
         List<EventResponse> getMyEvents();
 
+        List<EventSummaryResponse> getMyEventsSummary();
+
         EventResponse updateEvent(Long id, EventRequest request);
 
         void deleteEvent(Long id);

@@ -2,16 +2,25 @@ package com.eventhub.backend.dto;
 
 public class UpdateProfileRequest {
 
-    private String username;
+    private String firstName;
+    private String lastName;
     private String phone;
     private String userProfileImage;
 
-    public String getUsername() {
-        return username;
+    public String getFirstName() {
+        return firstName;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
     }
 
     public String getPhone() {

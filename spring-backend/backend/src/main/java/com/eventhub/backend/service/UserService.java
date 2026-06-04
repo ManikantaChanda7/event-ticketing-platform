@@ -16,6 +16,10 @@ public interface UserService {
 
         String loginUser(String email, String password);
 
+        String generateRefreshToken(String email);
+
+        String refreshAccessToken(String refreshToken);
+
         ProfileResponse getProfile(
 
                         String userEmail);

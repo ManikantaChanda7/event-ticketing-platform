@@ -16,7 +16,7 @@ const api = axios.create({
 
 // Attach token automatically
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem("token");
+  const token = localStorage.getItem("accessToken");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -44,12 +44,42 @@ api.interceptors.request.use((config) => {
 
 api.interceptors.response.use(
   (res) => res,
-  (error) => {
+  async (error) => {
     const status = error.response?.status;
     const message =
       error.response?.data?.message ||
       error.response?.data?.error ||
       "Something went wrong";
+
+    if (
+      status === 401 &&
+      !error.config?._retry &&
+      localStorage.getItem("refreshToken")
+    ) {
+      error.config._retry = true;
+
+      try {
+        const refreshResponse = await axios.post(
+          "http://localhost:8080/api/auth/refresh",
+          {
+            refreshToken: localStorage.getItem("refreshToken"),
+          },
+        );
+
+        const newAccessToken = refreshResponse.data.data.accessToken;
+        const newRefreshToken = refreshResponse.data.data.refreshToken;
+
+        localStorage.setItem("accessToken", newAccessToken);
+        localStorage.setItem("refreshToken", newRefreshToken);
+
+        error.config.headers.Authorization = `Bearer ${newAccessToken}`;
+
+        return axios(error.config);
+      } catch (refreshError) {
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+      }
+    }
 
     /* --------------------------------------------------------------
      🛑 1. SESSION EXPIRED ERROR (401 / 403)
@@ -58,7 +88,8 @@ api.interceptors.response.use(
       toastRef.current?.error("Session expired. Redirecting to login...");
 
       setTimeout(() => {
-        localStorage.removeItem("token");
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
         storeRef?.dispatch(logout());
         window.location.href = "/login";
       }, 2000);

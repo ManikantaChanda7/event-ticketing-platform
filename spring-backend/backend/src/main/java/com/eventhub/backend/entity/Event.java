@@ -12,7 +12,23 @@ import lombok.Getter;
 import lombok.Setter;
 
 @Entity
-@Table(name = "events")
+@Table(
+
+        name = "events",
+
+        indexes = {
+
+                @Index(name = "idx_event_category", columnList = "category"),
+
+                @Index(name = "idx_event_status", columnList = "status"),
+
+                @Index(name = "idx_event_organizer", columnList = "organizer_id"),
+
+                @Index(name = "idx_event_venue", columnList = "venue_id")
+
+        }
+
+)
 @Getter
 @Setter
 public class Event extends BaseEntity {

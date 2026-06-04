@@ -4,6 +4,7 @@ import com.eventhub.backend.entity.*;
 import com.eventhub.backend.enums.Role;
 import com.eventhub.backend.enums.EventStatus;
 import com.eventhub.backend.enums.SeatStatus;
+import com.eventhub.backend.enums.BookingStatus;
 import com.eventhub.backend.repository.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,6 +13,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import jakarta.persistence.EntityManager;
 
 import java.time.*;
 import java.time.temporal.ChronoUnit;
@@ -29,7 +31,9 @@ public class SeedData implements CommandLineRunner {
     private final SessionRepository sessionRepository;
     private final ReviewRepository reviewRepository;
     private final SeatRepository seatRepository;
+    private final BookingRepository bookingRepository;
     private final PasswordEncoder passwordEncoder;
+    private final EntityManager entityManager;
 
     private static final Random random = new Random();
     private static final ObjectMapper mapper = new ObjectMapper();
@@ -79,7 +83,9 @@ public class SeedData implements CommandLineRunner {
             SessionRepository sessionRepository,
             ReviewRepository reviewRepository,
             SeatRepository seatRepository,
-            PasswordEncoder passwordEncoder) {
+            BookingRepository bookingRepository,
+            PasswordEncoder passwordEncoder,
+            EntityManager entityManager) {
         this.userRepository = userRepository;
         this.organizerRepository = organizerRepository;
         this.venueRepository = venueRepository;
@@ -87,7 +93,9 @@ public class SeedData implements CommandLineRunner {
         this.sessionRepository = sessionRepository;
         this.reviewRepository = reviewRepository;
         this.seatRepository = seatRepository;
+        this.bookingRepository = bookingRepository;
         this.passwordEncoder = passwordEncoder;
+        this.entityManager = entityManager;
     }
 
     @Override
@@ -132,6 +140,9 @@ public class SeedData implements CommandLineRunner {
         // 8. Update user interests
         updateUserInterests();
 
+        // 9. Seed bookings
+        seedBookings();
+
         System.out.println("Database seeding completed successfully!");
     }
 
@@ -154,41 +165,20 @@ public class SeedData implements CommandLineRunner {
 
     private void clearDatabase() {
         System.out.println("Clearing existing data...");
-        try {
-            reviewRepository.deleteAll();
-        } catch (Exception e) {
-            System.out.println("Reviews table might not exist yet");
-        }
-        try {
-            sessionRepository.deleteAll();
-        } catch (Exception e) {
-            System.out.println("Sessions table might not exist yet");
-        }
-        try {
-            seatRepository.deleteAll();
-        } catch (Exception e) {
-            System.out.println("Seats table might not exist yet");
-        }
-        try {
-            eventRepository.deleteAll();
-        } catch (Exception e) {
-            System.out.println("Events table might not exist yet");
-        }
-        try {
-            venueRepository.deleteAll();
-        } catch (Exception e) {
-            System.out.println("Venues table might not exist yet");
-        }
-        try {
-            organizerRepository.deleteAll();
-        } catch (Exception e) {
-            System.out.println("Organizers table might not exist yet");
-        }
-        try {
-            userRepository.deleteAll();
-        } catch (Exception e) {
-            System.out.println("Users table might not exist yet");
-        }
+
+        entityManager.createNativeQuery("""
+                    TRUNCATE TABLE
+                    bookings,
+                    reviews,
+                    seats,
+                    sessions,
+                    events,
+                    venues,
+                    organizers,
+                    users
+                    RESTART IDENTITY CASCADE
+                """).executeUpdate();
+
         System.out.println("Existing data cleared");
     }
 
@@ -531,6 +521,105 @@ public class SeedData implements CommandLineRunner {
             }
         }
         System.out.println("User interests updated for " + totalUsers + " users and " + events.size() + " events");
+    }
+
+    private void seedBookings() {
+        System.out.println("Seeding bookings...");
+        List<Booking> bookings = new ArrayList<>();
+        int batchSize = 100;
+        int bookingCount = 0;
+
+        // Get all sessions
+        List<Session> allSessions = sessionRepository.findAll();
+        System.out.println("Found " + allSessions.size() + " sessions");
+
+        for (Session session : allSessions) {
+            // Skip sessions that are too far in the future or too old
+            if (session.getDate().isAfter(LocalDate.now().plusDays(90)) ||
+                    session.getDate().isBefore(LocalDate.now().minusDays(365))) {
+                continue;
+            }
+
+            Event event = session.getEvent();
+
+            // Get seats for this session that are already booked
+            List<Seat> bookedSeats = seatRepository.findBySession(session).stream()
+                    .filter(s -> s.getUser() != null && s.getStatus() == SeatStatus.BOOKED)
+                    .collect(Collectors.toList());
+
+            if (bookedSeats.isEmpty()) {
+                continue;
+            }
+
+            // Group booked seats by user to create bookings
+            Map<User, List<Seat>> seatsByUser = bookedSeats.stream()
+                    .collect(Collectors.groupingBy(Seat::getUser));
+
+            for (Map.Entry<User, List<Seat>> entry : seatsByUser.entrySet()) {
+                User user = entry.getKey();
+                List<Seat> userSeats = entry.getValue();
+
+                // Create booking
+                Booking booking = new Booking();
+                booking.setUser(user);
+                booking.setEvent(event);
+                booking.setSession(session);
+                booking.setStatus(BookingStatus.CONFIRMED);
+
+                // Create booked seats list
+                List<Booking.BookedSeat> bookedSeatList = new ArrayList<>();
+                double totalAmount = 0;
+
+                for (Seat seat : userSeats) {
+                    Booking.BookedSeat bookedSeat = new Booking.BookedSeat();
+                    bookedSeat.setSeatId(seat.getSeatId());
+                    bookedSeat.setSection(seat.getSection());
+
+                    double seatPrice = seat.getPrice() != null ? seat.getPrice() : 0.0;
+
+                    bookedSeat.setPrice(java.math.BigDecimal.valueOf(seatPrice));
+                    bookedSeatList.add(bookedSeat);
+                    totalAmount += seatPrice;
+                }
+
+                booking.setSeats(bookedSeatList);
+                booking.setTotalAmount(java.math.BigDecimal.valueOf(totalAmount));
+
+                // Create ticket summary from session tickets
+                List<Booking.TicketSummary> ticketSummaryList = new ArrayList<>();
+                if (session.getTickets() != null) {
+                    for (Session.Ticket ticket : session.getTickets()) {
+                        int seatsForType = (int) userSeats.stream()
+                                .filter(s -> s.getSection().equals(ticket.getType()))
+                                .count();
+                        if (seatsForType > 0) {
+                            Booking.TicketSummary summary = new Booking.TicketSummary();
+                            summary.setType(ticket.getType());
+                            summary.setQuantity(seatsForType);
+                            summary.setTotalPrice(java.math.BigDecimal.valueOf(seatsForType * ticket.getPrice()));
+                            ticketSummaryList.add(summary);
+                        }
+                    }
+                }
+                booking.setTicketsSummary(ticketSummaryList);
+
+                bookings.add(booking);
+                bookingCount++;
+
+                if (bookings.size() >= batchSize) {
+                    bookingRepository.saveAll(bookings);
+                    bookings.clear();
+                    System.out.println("Created " + bookingCount + " bookings so far");
+                }
+            }
+        }
+
+        // Save remaining bookings
+        if (!bookings.isEmpty()) {
+            bookingRepository.saveAll(bookings);
+        }
+
+        System.out.println("Bookings seeded: " + bookingCount);
     }
 
     private void assignFeaturedEvents() {
@@ -880,6 +969,13 @@ public class SeedData implements CommandLineRunner {
                         Seat seat = new Seat();
                         seat.setSeatId(seatId);
                         seat.setSection(entry.getKey());
+                        if ("Platinum".equals(entry.getKey())) {
+                            seat.setPrice(2000.0);
+                        } else if ("Gold".equals(entry.getKey())) {
+                            seat.setPrice(1200.0);
+                        } else {
+                            seat.setPrice(600.0);
+                        }
                         String status = statuses[random.nextInt(statuses.length)];
                         seat.setStatus(SeatStatus.valueOf(status));
 

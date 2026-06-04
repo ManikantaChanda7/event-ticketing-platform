@@ -93,7 +93,7 @@ function App() {
     location.pathname.includes("/sessions");
 
   useEffect(() => {
-    if (localStorage.getItem("token")) {
+    if (localStorage.getItem("accessToken")) {
       dispatch(fetchUserProfile());
     }
   }, []);

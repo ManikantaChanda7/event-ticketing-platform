@@ -14,6 +14,7 @@ import com.eventhub.backend.repository.UserRepository;
 import com.eventhub.backend.service.UserService;
 import com.eventhub.backend.util.JwtService;
 
+import jakarta.transaction.Transactional;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -71,6 +72,30 @@ public class UserServiceImpl implements UserService {
         }
 
         @Override
+        public String generateRefreshToken(String email) {
+
+                User user = userRepository.findByEmail(email)
+                                .orElseThrow(() -> new RuntimeException("User not found"));
+
+                return jwtService.generateRefreshToken(user.getEmail());
+        }
+
+        @Override
+        public String refreshAccessToken(String refreshToken) {
+
+                String email = jwtService.extractUsername(refreshToken);
+
+                User user = userRepository.findByEmail(email)
+                                .orElseThrow(() -> new RuntimeException("User not found"));
+
+                if (!jwtService.isTokenValid(refreshToken, user.getEmail())) {
+                        throw new RuntimeException("Invalid refresh token");
+                }
+
+                return jwtService.generateToken(user.getEmail());
+        }
+
+        @Override
 
         public ProfileResponse getProfile(
 
@@ -89,7 +114,7 @@ public class UserServiceImpl implements UserService {
         }
 
         @Override
-
+        @Transactional
         public ProfileResponse updateProfile(
 
                         String userEmail,
@@ -104,10 +129,10 @@ public class UserServiceImpl implements UserService {
 
                                                 "User not found"));
 
-                if (request.getUsername() != null) {
-
-                        user.setUsername(request.getUsername());
-
+                if (request.getFirstName() != null || request.getLastName() != null) {
+                        String firstName = request.getFirstName() != null ? request.getFirstName() : "";
+                        String lastName = request.getLastName() != null ? request.getLastName() : "";
+                        user.setUsername(firstName + " " + lastName);
                 }
 
                 if (request.getPhone() != null) {
@@ -124,7 +149,7 @@ public class UserServiceImpl implements UserService {
 
                 }
 
-                userRepository.save(user);
+                user = userRepository.saveAndFlush(user);
 
                 return mapToProfileResponse(user);
 
@@ -142,6 +167,12 @@ public class UserServiceImpl implements UserService {
                 response.setId(user.getId());
 
                 response.setUsername(user.getUsername());
+
+                // Split username into firstName and lastName
+                String[] nameParts = user.getUsername() != null ? user.getUsername().split(" ", 2)
+                                : new String[] { "", "" };
+                response.setFirstName(nameParts.length > 0 ? nameParts[0] : "");
+                response.setLastName(nameParts.length > 1 ? nameParts[1] : "");
 
                 response.setEmail(user.getEmail());
 

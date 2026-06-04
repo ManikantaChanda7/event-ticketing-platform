@@ -20,7 +20,7 @@ export const updateProfile = createAsyncThunk(
   async (formData, { rejectWithValue }) => {
     try {
       const response = await api.put("user/update-profile", formData);
-      return response.data.user;
+      return response.data.data;
     } catch (err) {
       return rejectWithValue(err.response?.data || err.message);
     }

@@ -11,6 +11,11 @@ import {
   fetchSessionById,
   fetchSessionsByEventId,
 } from "../redux/slices/sessionSlice";
+import {
+  connectWebSocket,
+  disconnectWebSocket,
+  sendSeatUpdate,
+} from "../utils/websocket";
 
 export default function EventSessions() {
   const dispatch = useDispatch();
@@ -25,6 +30,7 @@ export default function EventSessions() {
   const [selectedSeats, setSelectedSeats] = useState([]);
   const [paymentStatus, setPaymentStatus] = useState(null);
   const [sessionId, setSessionId] = useState(null);
+  const [seatUpdates, setSeatUpdates] = useState({});
 
   const { selectedEvent: event, selectedEventVenue: venue } = useSelector(
     (state) => state.event,
@@ -79,6 +85,28 @@ export default function EventSessions() {
     };
   }, []);
 
+  // Connect to WebSocket for real-time seat updates
+  useEffect(() => {
+    if (sessionId) {
+      // Clear seat updates when session changes
+      setSeatUpdates({});
+
+      connectWebSocket((seatUpdate) => {
+        // Only update if the update is for the current session
+        if (seatUpdate.sessionId === sessionId) {
+          setSeatUpdates((prev) => ({
+            ...prev,
+            [`${seatUpdate.sessionId}-${seatUpdate.seatId}`]: seatUpdate.status,
+          }));
+        }
+      });
+    }
+
+    return () => {
+      disconnectWebSocket();
+    };
+  }, [sessionId]);
+
   const getSeatPrice = (sectionName) => {
     const ticket = session?.tickets.find((t) => t.type === sectionName);
     return ticket ? ticket.price : 12; // fallback to $12 if not found
@@ -116,14 +144,30 @@ export default function EventSessions() {
       );
       if (exists) {
         // remove it
-        return prev.filter(
+        const newSeats = prev.filter(
           (s) => !(s.seatId === seatId && s.section === sectionName),
         );
+        // Broadcast deselection via WebSocket
+        sendSeatUpdate({
+          sessionId,
+          seatId,
+          status: "AVAILABLE",
+          userId: null,
+        });
+        return newSeats;
       } else {
         const price = session?.tickets.find(
           (t) => t.type === sectionName,
         ).price;
-        return [...prev, { section: sectionName, seatId, price }];
+        const newSeats = [...prev, { section: sectionName, seatId, price }];
+        // Broadcast selection via WebSocket
+        sendSeatUpdate({
+          sessionId,
+          seatId,
+          status: "SELECTED",
+          userId: null, // You can add user ID if available
+        });
+        return newSeats;
       }
     });
   };
@@ -189,12 +233,16 @@ export default function EventSessions() {
 
             {/* Legend at top-right */}
             <div className="absolute top-9 right-10 flex flex-wrap gap-2 text-xs items-center max-sm:static max-sm:mt-2 max-sm:ml-2 max-sm:flex-wrap max-sm:gap-1">
-              <span className="w-3 h-3 max-sm:w-2.5 max-sm:h-2.5 bg-green-500 rounded-full"></span>{" "}
+              <span className="w-3 h-3 max-sm:w-2.5 max-sm:h-2.5 bg-gray-200 rounded-full"></span>{" "}
               Available
+              <span className="w-3 h-3 max-sm:w-2.5 max-sm:h-2.5 bg-indigo-600 rounded-full max-sm:ml-1 ml-2"></span>{" "}
+              Selected by You
               <span className="w-3 h-3 max-sm:w-2.5 max-sm:h-2.5 bg-yellow-400 rounded-full max-sm:ml-1 ml-2"></span>{" "}
-              Fast Filling
+              Selected by Others
+              <span className="w-3 h-3 max-sm:w-2.5 max-sm:h-2.5 bg-gray-400 rounded-full max-sm:ml-1 ml-2"></span>{" "}
+              Booked
               <span className="w-3 h-3 max-sm:w-2.5 max-sm:h-2.5 bg-red-500 rounded-full max-sm:ml-1 ml-2"></span>{" "}
-              Sold Out
+              Blocked
             </div>
 
             <div className="flex items-center gap-2 px-2 mt-6">
@@ -512,7 +560,8 @@ export default function EventSessions() {
     "
               >
                 <Legend color="bg-gray-200" label="Available" />
-                <Legend color="bg-indigo-600" label="Selected" />
+                <Legend color="bg-indigo-600" label="Selected by You" />
+                <Legend color="bg-yellow-400" label="Selected by Others" />
                 <Legend color="bg-gray-400" label="Booked" />
                 <Legend color="bg-red-500" label="Blocked" />
               </div>
@@ -565,7 +614,11 @@ export default function EventSessions() {
                           s.section === openSection.section,
                       );
 
-                      const status = seatInfo?.status || "available";
+                      // Check real-time updates first, then fall back to session data
+                      const realTimeStatus =
+                        seatUpdates[`${sessionId}-${seatId}`];
+                      const status =
+                        realTimeStatus || seatInfo?.status || "available";
 
                       const isSelected = selectedSeats?.some(
                         (s) =>
@@ -578,10 +631,14 @@ export default function EventSessions() {
                         "w-6 h-6 text-xs " +
                         "max-sm:w-5 max-sm:h-5 max-sm:text-[10px] ";
 
-                      if (status === "booked") {
+                      if (status === "booked" || status === "BOOKED") {
                         classes += "bg-gray-400 cursor-not-allowed text-white";
-                      } else if (status === "blocked") {
+                      } else if (status === "blocked" || status === "BLOCKED") {
                         classes += "bg-red-500 cursor-not-allowed text-white";
+                      } else if (status === "SELECTED" && !isSelected) {
+                        // Selected by another user
+                        classes +=
+                          "bg-yellow-400 cursor-not-allowed text-white";
                       } else if (isSelected) {
                         classes += "bg-indigo-600 text-white cursor-pointer";
                       } else {
@@ -592,7 +649,13 @@ export default function EventSessions() {
                       return (
                         <button
                           key={seatId}
-                          disabled={status === "booked" || status === "blocked"}
+                          disabled={
+                            status === "booked" ||
+                            status === "blocked" ||
+                            status === "BOOKED" ||
+                            status === "BLOCKED" ||
+                            (status === "SELECTED" && !isSelected)
+                          }
                           className={classes}
                           onClick={() =>
                             toggleSeat(openSection.section, seatId)

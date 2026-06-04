@@ -8,46 +8,83 @@ import com.eventhub.backend.dto.RegisterRequest;
 import com.eventhub.backend.dto.RegisterResponse;
 import com.eventhub.backend.entity.User;
 import com.eventhub.backend.service.UserService;
+import com.eventhub.backend.util.JwtService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
 
-    private final UserService userService;
+        private final UserService userService;
+        private final JwtService jwtService;
 
-    public AuthController(UserService userService) {
-        this.userService = userService;
-    }
+        public AuthController(UserService userService, JwtService jwtService) {
+                this.userService = userService;
+                this.jwtService = jwtService;
+        }
 
-    @PostMapping("/register")
-    @ResponseStatus(HttpStatus.CREATED)
-    public ApiResponse<RegisterResponse> register(@Valid @RequestBody RegisterRequest request) {
-        User user = userService.registerUser(request);
-        // TODO: Populate token, userId, userRole, interestedEvents properly
-        RegisterResponse response = new RegisterResponse(null, user.getId(), user.getRole().name(), null);
-        return new ApiResponse<>(true, "User registered successfully", response);
-    }
+        @PostMapping("/register")
+        @ResponseStatus(HttpStatus.CREATED)
+        public ApiResponse<RegisterResponse> register(@Valid @RequestBody RegisterRequest request) {
+                User user = userService.registerUser(request);
+                String token = userService.loginUser(
+                                request.getEmail(),
+                                request.getPassword());
+                String refreshToken = userService.generateRefreshToken(
+                                request.getEmail());
 
-    @PostMapping("/login")
-    public ApiResponse<LoginResponse> login(
-            @Valid @RequestBody LoginRequest request) {
+                RegisterResponse response = new RegisterResponse(
+                                token,
+                                refreshToken,
+                                user.getId(),
+                                user.getRole().name(),
+                                List.of());
+                return new ApiResponse<>(true, "User registered successfully", response);
+        }
 
-        String token = userService.loginUser(
-                request.getEmail(),
-                request.getPassword());
+        @PostMapping("/login")
+        public ApiResponse<LoginResponse> login(
+                        @Valid @RequestBody LoginRequest request) {
 
-        // Fetch user to populate response fields
-        ProfileResponse profile = userService.getProfile(request.getEmail());
+                String accessToken = userService.loginUser(
+                                request.getEmail(),
+                                request.getPassword());
+                String refreshToken = userService.generateRefreshToken(
+                                request.getEmail());
 
-        // Fetch user's interested events
-        List<Long> userInterests = userService.getUserInterestedEventIds(request.getEmail());
+                // Fetch user to populate response fields
+                ProfileResponse profile = userService.getProfile(request.getEmail());
 
-        LoginResponse response = new LoginResponse(token, profile.getId(), profile.getRole(), userInterests);
-        return new ApiResponse<>(true, "Login successful", response);
-    }
+                // Fetch user's interested events
+                List<Long> userInterests = userService.getUserInterestedEventIds(request.getEmail());
+
+                LoginResponse response = new LoginResponse(
+                                accessToken,
+                                refreshToken,
+                                profile.getId(),
+                                profile.getRole(),
+                                userInterests);
+                return new ApiResponse<>(true, "Login successful", response);
+        }
+
+        @PostMapping("/refresh")
+        public ApiResponse<Map<String, String>> refreshToken(
+                        @RequestBody Map<String, String> request) {
+
+                String refreshToken = request.get("refreshToken");
+
+                String email = userService.refreshAccessToken(refreshToken);
+                String newAccessToken = jwtService.generateToken(email);
+                String newRefreshToken = jwtService.generateRefreshToken(email);
+
+                return new ApiResponse<>(
+                                true,
+                                "Token refreshed successfully",
+                                Map.of("accessToken", newAccessToken, "refreshToken", newRefreshToken));
+        }
 }

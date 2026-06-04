@@ -20,6 +20,4 @@ public interface BookingService {
         BookingStatusResponse isEventBooked(
                         Long eventId,
                         String userEmail);
-
-        BookingResponse cancelBooking(Long bookingId);
 }

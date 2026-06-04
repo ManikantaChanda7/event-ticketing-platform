@@ -9,7 +9,10 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-@Table(name = "sessions")
+@Table(name = "sessions", indexes = {
+        @Index(name = "idx_session_event", columnList = "event_id"),
+        @Index(name = "idx_session_date", columnList = "date")
+})
 @Getter
 @Setter
 public class Session extends BaseEntity {

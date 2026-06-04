@@ -50,8 +50,8 @@ public class EventController {
         }
 
         @GetMapping("/my-events")
-        public ApiResponse<List<EventResponse>> getMyEvents() {
-                List<EventResponse> response = eventService.getMyEvents();
+        public ApiResponse<List<EventSummaryResponse>> getMyEvents() {
+                List<EventSummaryResponse> response = eventService.getMyEventsSummary();
                 return new ApiResponse<>(true, "My events fetched successfully", response);
         }
 

@@ -44,7 +44,7 @@ public class User extends BaseEntity {
 
     private String preferredLocationLabel;
 
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "user_interested_events", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "event_id"))
     private Set<Event> interestedEvents = new HashSet<>();
 }

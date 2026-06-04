@@ -12,6 +12,9 @@ import com.eventhub.backend.repository.OrganizerRepository;
 import com.eventhub.backend.repository.SessionRepository;
 import com.eventhub.backend.repository.UserRepository;
 import com.eventhub.backend.service.SessionService;
+
+import org.springframework.transaction.annotation.Transactional;
+
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -39,6 +42,7 @@ public class SessionServiceImpl implements SessionService {
         }
 
         @Override
+        @Transactional
         public SessionResponse createSession(SessionRequest request) {
 
                 String email = SecurityContextHolder
@@ -73,12 +77,23 @@ public class SessionServiceImpl implements SessionService {
 
                 session.setEndTime(request.getEndTime());
 
+                if (sessionRepository
+                                .existsByEventAndDateAndStartTime(
+                                                event,
+                                                session.getDate(),
+                                                session.getStartTime())) {
+
+                        throw new IllegalStateException(
+                                        "Session already exists");
+                }
+
                 session = sessionRepository.save(session);
 
                 return mapToResponse(session);
         }
 
         @Override
+        @Transactional(readOnly = true)
         public List<SessionResponse> getAllSessions() {
 
                 return sessionRepository.findAll()
@@ -88,6 +103,7 @@ public class SessionServiceImpl implements SessionService {
         }
 
         @Override
+        @Transactional(readOnly = true)
         public SessionResponse getSessionById(Long id) {
 
                 Session session = sessionRepository.findById(id)
@@ -97,6 +113,7 @@ public class SessionServiceImpl implements SessionService {
         }
 
         @Override
+        @Transactional(readOnly = true)
         public List<SessionResponse> getSessionsByEvent(Long eventId) {
 
                 Event event = eventRepository.findById(eventId)

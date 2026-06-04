@@ -13,45 +13,69 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiResponse<Map<String, String>>> handleValidationException(
-            MethodArgumentNotValidException ex) {
+        @ExceptionHandler(MethodArgumentNotValidException.class)
+        public ResponseEntity<ApiResponse<Map<String, String>>> handleValidationException(
+                        MethodArgumentNotValidException ex) {
 
-        Map<String, String> errors = new HashMap<>();
+                Map<String, String> errors = new HashMap<>();
 
-        ex.getBindingResult()
-                .getFieldErrors()
-                .forEach(error -> errors.put(error.getField(), error.getDefaultMessage()));
+                ex.getBindingResult()
+                                .getFieldErrors()
+                                .forEach(error -> errors.put(error.getField(), error.getDefaultMessage()));
 
-        ApiResponse<Map<String, String>> response = new ApiResponse<>(
-                false,
-                "Validation failed",
-                errors);
+                ApiResponse<Map<String, String>> response = new ApiResponse<>(
+                                false,
+                                "Validation failed",
+                                errors);
 
-        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
-    }
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        }
 
-    @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ApiResponse<Void>> handleResourceNotFound(
-            ResourceNotFoundException ex) {
+        @ExceptionHandler(ResourceNotFoundException.class)
+        public ResponseEntity<ApiResponse<Void>> handleResourceNotFound(
+                        ResourceNotFoundException ex) {
 
-        ApiResponse<Void> response = new ApiResponse<>(
-                false,
-                ex.getMessage(),
-                null);
+                ApiResponse<Void> response = new ApiResponse<>(
+                                false,
+                                ex.getMessage(),
+                                null);
 
-        return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
-    }
+                return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiResponse<Void>> handleGenericException(
-            Exception ex) {
+        // @ExceptionHandler(Exception.class)
+        // public ResponseEntity<ApiResponse<Void>> handleGenericException(
+        // Exception ex) {
 
-        ApiResponse<Void> response = new ApiResponse<>(
-                false,
-                "An error occurred: " + ex.getMessage(),
-                null);
+        // ApiResponse<Void> response = new ApiResponse<>(
+        // false,
+        // "An error occurred: " + ex.getMessage(),
+        // null);
 
-        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
+        // return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+        // }
+
+        @ExceptionHandler(Exception.class)
+        public ResponseEntity<ApiResponse<Void>> handleGenericException(
+                        Exception ex) {
+
+                ex.printStackTrace();
+
+                Throwable root = ex;
+                while (root.getCause() != null) {
+                        root = root.getCause();
+                }
+
+                System.err.println("ROOT CAUSE:");
+                root.printStackTrace();
+
+                ApiResponse<Void> response = new ApiResponse<>(
+                                false,
+                                "An error occurred: " + root.getMessage(),
+                                null);
+
+                return new ResponseEntity<>(
+                                response,
+                                HttpStatus.INTERNAL_SERVER_ERROR);
+        }
 }
