@@ -321,7 +321,7 @@ export default function HomePage() {
               )}
 
             {/* Organizer Section (KEEPING EXACT UPDATE) */}
-            {role === "user" && (
+            {role === "USER" && (
               <Box py={{ xs: 4, sm: 5, md: 6 }} sx={{ bgcolor: "#f3f1ff" }}>
                 <Container>
                   <Box

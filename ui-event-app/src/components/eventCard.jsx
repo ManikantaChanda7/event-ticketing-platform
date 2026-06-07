@@ -11,12 +11,12 @@ const EventCard = ({ item }) => {
   const dispatch = useDispatch();
 
   const { interestedEvents, interestedEventsLoading } = useSelector(
-    (state) => state.auth
+    (state) => state.auth,
   );
 
   const isMyInterests = location.pathname === "/interests";
   const bookmarked = interestedEvents?.includes(item?._id);
-  const isPast = item?.status === "completed";
+  const isPast = item?.status?.toUpperCase() === "COMPLETED";
 
   const handleClick = () => {
     dispatch(setSelectedEvent(item));
@@ -43,7 +43,7 @@ const EventCard = ({ item }) => {
       case "weekly":
         return `Weekly • ${format(start, "MMM d")} – ${format(
           end,
-          "MMM d"
+          "MMM d",
         )} • ${time}`;
       default:
         return format(start, "EEE, MMM d");
@@ -188,7 +188,7 @@ const EventCard = ({ item }) => {
           src={item?.thumbnailImage}
           alt={item?.title}
           className={`
-        absolute inset-0 w-full h-full object-cover 
+        absolute inset-0 w-full h-full object-contain 
         transition-all duration-300 group-hover:scale-105
         ${isPast ? "grayscale brightness-90" : ""}
       `}
@@ -235,7 +235,7 @@ const EventCard = ({ item }) => {
           </div>
 
           {/* Status */}
-          {!isMyInterests && item?.status === "upcoming" && (
+          {!isMyInterests && item?.status?.toUpperCase() === "UPCOMING" && (
             <div
               className="
           px-1.5 sm:px-2 py-[2px] 
@@ -244,7 +244,19 @@ const EventCard = ({ item }) => {
           bg-gradient-to-r from-[#ff512f] to-[#dd2476] shadow-md
         "
             >
-              {item?.status}
+              Upcoming
+            </div>
+          )}
+          {!isMyInterests && item?.status?.toUpperCase() === "COMPLETED" && (
+            <div
+              className="
+          px-1.5 sm:px-2 py-[2px] 
+          text-[9px] sm:text-[10px] font-semibold rounded-md 
+          text-white uppercase 
+          bg-gray-500 shadow-md
+        "
+            >
+              Completed
             </div>
           )}
         </div>

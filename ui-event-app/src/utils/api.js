@@ -78,6 +78,16 @@ api.interceptors.response.use(
       } catch (refreshError) {
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
+        localStorage.removeItem("userId");
+        localStorage.removeItem("role");
+
+        toastRef.current?.error("Session expired. Redirecting to login...");
+        setTimeout(() => {
+          storeRef?.dispatch(logout());
+          window.location.href = "/login";
+        }, 2000);
+
+        return Promise.reject(error);
       }
     }
 
@@ -90,6 +100,8 @@ api.interceptors.response.use(
       setTimeout(() => {
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
+        localStorage.removeItem("userId");
+        localStorage.removeItem("role");
         storeRef?.dispatch(logout());
         window.location.href = "/login";
       }, 2000);

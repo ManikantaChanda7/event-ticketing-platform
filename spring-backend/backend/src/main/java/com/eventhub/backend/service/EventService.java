@@ -39,11 +39,11 @@ public interface EventService {
 
         List<EventSummaryResponse> getRecommendedEvents();
 
-        void markInterest(
+        Integer markInterest(
                         Long eventId,
                         String userEmail);
 
-        void removeInterest(
+        Integer removeInterest(
                         Long eventId,
                         String userEmail);
 

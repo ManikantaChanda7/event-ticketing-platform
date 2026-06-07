@@ -352,7 +352,7 @@ export const eventSlice = createSlice({
       state.bookingSuccess = action.payload;
     },
     updateInterestedUsers: (state, action) => {
-      state.selectedEvent.interestedUsers = action.payload;
+      state.selectedEvent.interestedUsers = action.payload.data;
     },
   },
   extraReducers: (builder) => {

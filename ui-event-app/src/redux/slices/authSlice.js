@@ -207,12 +207,16 @@ const authSlice = createSlice({
 
       .addCase(updateUserInterests.pending, (state) => {
         state.updateInterestsLoading = true;
+        state.interestedEventsLoading = true;
         state.updateInterestsError = null;
       })
       .addCase(updateUserInterests.fulfilled, (state, action) => {
         state.updateInterestsLoading = false;
+        state.interestedEventsLoading = false;
         state.updateInterestsSuccess = true;
+
         const { eventId, isInterested } = action.payload;
+
         if (isInterested) {
           state.interestedEvents = [...state.interestedEvents, eventId];
         } else {
@@ -223,6 +227,7 @@ const authSlice = createSlice({
       })
       .addCase(updateUserInterests.rejected, (state, action) => {
         state.updateInterestsLoading = false;
+        state.interestedEventsLoading = false;
         state.updateInterestsError = action.payload || "Something went wrong";
       })
       .addCase(loginOAuthUser.pending, (state) => {

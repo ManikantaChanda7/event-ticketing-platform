@@ -11,6 +11,7 @@ import com.eventhub.backend.repository.BookingRepository;
 import com.eventhub.backend.repository.EventRepository;
 import com.eventhub.backend.repository.OrganizerRepository;
 import com.eventhub.backend.repository.SessionRepository;
+import com.eventhub.backend.util.EventStatusUtil;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -415,7 +416,7 @@ public class OrganizerDashboardController {
         response.setCategory(event.getCategory());
         response.setBannerImage(event.getBannerImage());
         response.setThumbnailImage(event.getThumbnailImage());
-        response.setStatus(event.getStatus().name());
+        response.setStatus(EventStatusUtil.getCurrentStatus(event).name());
         response.setStartingPrice(event.getStartingPrice());
         response.setRecurrence(event.getRecurrence());
         response.setStartDate(event.getStartDate() != null ? event.getStartDate().toString() : null);

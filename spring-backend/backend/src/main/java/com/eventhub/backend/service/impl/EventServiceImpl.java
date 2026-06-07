@@ -23,6 +23,7 @@ import com.eventhub.backend.repository.SessionRepository;
 import com.eventhub.backend.repository.UserRepository;
 import com.eventhub.backend.repository.VenueRepository;
 import com.eventhub.backend.service.EventService;
+import com.eventhub.backend.util.EventStatusUtil;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -348,7 +349,7 @@ public class EventServiceImpl implements EventService {
         }
 
         @Override
-        public void markInterest(
+        public Integer markInterest(
                         Long eventId,
                         String userEmail) {
 
@@ -364,7 +365,7 @@ public class EventServiceImpl implements EventService {
 
                 if (user.getInterestedEvents()
                                 .contains(event)) {
-                        return;
+                        return event.getInterestedUsers() == null ? 0 : event.getInterestedUsers();
                 }
 
                 user.getInterestedEvents()
@@ -377,10 +378,11 @@ public class EventServiceImpl implements EventService {
 
                 userRepository.save(user);
                 eventRepository.save(event);
+                return event.getInterestedUsers();
         }
 
         @Override
-        public void removeInterest(
+        public Integer removeInterest(
                         Long eventId,
                         String userEmail) {
 
@@ -406,6 +408,7 @@ public class EventServiceImpl implements EventService {
 
                 userRepository.save(user);
                 eventRepository.save(event);
+                return event.getInterestedUsers();
         }
 
         @Override
@@ -496,9 +499,9 @@ public class EventServiceImpl implements EventService {
                                 event.getBannerImage());
 
                 response.setStatus(
-                                event.getStatus().name());
+                                EventStatusUtil.getCurrentStatus(event).name());
                 response.setThumbnailImage(
-                                event.getBannerImage()); // temporary
+                                event.getThumbnailImage()); // temporary
 
                 response.setStartingPrice(event.getStartingPrice() != null
                                 ? event.getStartingPrice()
@@ -862,7 +865,10 @@ public class EventServiceImpl implements EventService {
                                 .description(event.getDescription())
                                 .category(event.getCategory())
                                 .bannerImage(event.getBannerImage())
-                                .status(event.getStatus() != null ? event.getStatus().name() : null)
+                                .status(EventStatusUtil.getCurrentStatus(event) != null
+                                                ? EventStatusUtil.getCurrentStatus(event)
+                                                                .name()
+                                                : null)
                                 .organizer(organizerResponse)
                                 .venue(event.getVenue().getId())
                                 .averageRating(
@@ -879,7 +885,7 @@ public class EventServiceImpl implements EventService {
                                 .endTime(event.getEndTime())
                                 .recurrence(event.getRecurrence())
                                 .thumbnailImage(
-                                                event.getBannerImage())
+                                                event.getThumbnailImage())
                                 .sessions(mapSessions(event))
                                 .build();
         }

@@ -233,16 +233,12 @@ export default function EventSessions() {
 
             {/* Legend at top-right */}
             <div className="absolute top-9 right-10 flex flex-wrap gap-2 text-xs items-center max-sm:static max-sm:mt-2 max-sm:ml-2 max-sm:flex-wrap max-sm:gap-1">
-              <span className="w-3 h-3 max-sm:w-2.5 max-sm:h-2.5 bg-gray-200 rounded-full"></span>{" "}
+              <span className="w-3 h-3 max-sm:w-2.5 max-sm:h-2.5 bg-green-500 rounded-full"></span>{" "}
               Available
-              <span className="w-3 h-3 max-sm:w-2.5 max-sm:h-2.5 bg-indigo-600 rounded-full max-sm:ml-1 ml-2"></span>{" "}
-              Selected by You
               <span className="w-3 h-3 max-sm:w-2.5 max-sm:h-2.5 bg-yellow-400 rounded-full max-sm:ml-1 ml-2"></span>{" "}
-              Selected by Others
-              <span className="w-3 h-3 max-sm:w-2.5 max-sm:h-2.5 bg-gray-400 rounded-full max-sm:ml-1 ml-2"></span>{" "}
-              Booked
+              Fast Filling
               <span className="w-3 h-3 max-sm:w-2.5 max-sm:h-2.5 bg-red-500 rounded-full max-sm:ml-1 ml-2"></span>{" "}
-              Blocked
+              Sold
             </div>
 
             <div className="flex items-center gap-2 px-2 mt-6">
@@ -563,7 +559,6 @@ export default function EventSessions() {
                 <Legend color="bg-indigo-600" label="Selected by You" />
                 <Legend color="bg-yellow-400" label="Selected by Others" />
                 <Legend color="bg-gray-400" label="Booked" />
-                <Legend color="bg-red-500" label="Blocked" />
               </div>
               <button
                 onClick={() => setOpenSection(null)}

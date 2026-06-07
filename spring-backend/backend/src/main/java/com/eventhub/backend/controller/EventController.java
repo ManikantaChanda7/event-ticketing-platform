@@ -110,19 +110,19 @@ public class EventController {
         }
 
         @PostMapping("/{eventId}/interest")
-        public ApiResponse<Void> markInterest(
+        public ApiResponse<Integer> markInterest(
                         @PathVariable Long eventId,
                         Authentication authentication) {
-                eventService.markInterest(eventId, authentication.getName());
-                return new ApiResponse<>(true, "Interest added successfully", null);
+                Integer interestedUsers = eventService.markInterest(eventId, authentication.getName());
+                return new ApiResponse<>(true, "Interest added successfully", interestedUsers);
         }
 
         @DeleteMapping("/{eventId}/interest")
-        public ApiResponse<Void> removeInterest(
+        public ApiResponse<Integer> removeInterest(
                         @PathVariable Long eventId,
                         Authentication authentication) {
-                eventService.removeInterest(eventId, authentication.getName());
-                return new ApiResponse<>(true, "Interest removed successfully", null);
+                Integer interestedUsers = eventService.removeInterest(eventId, authentication.getName());
+                return new ApiResponse<>(true, "Interest removed successfully", interestedUsers);
         }
 
         @GetMapping("/trendingEvents")
