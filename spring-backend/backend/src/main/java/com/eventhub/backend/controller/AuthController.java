@@ -3,10 +3,13 @@ package com.eventhub.backend.controller;
 import com.eventhub.backend.dto.ApiResponse;
 import com.eventhub.backend.dto.LoginRequest;
 import com.eventhub.backend.dto.LoginResponse;
+import com.eventhub.backend.dto.OrganizerRequest;
+import com.eventhub.backend.dto.OrganizerResponse;
 import com.eventhub.backend.dto.ProfileResponse;
 import com.eventhub.backend.dto.RegisterRequest;
 import com.eventhub.backend.dto.RegisterResponse;
 import com.eventhub.backend.entity.User;
+import com.eventhub.backend.service.OrganizerService;
 import com.eventhub.backend.service.UserService;
 import com.eventhub.backend.util.JwtService;
 import org.springframework.http.HttpStatus;
@@ -22,10 +25,12 @@ public class AuthController {
 
         private final UserService userService;
         private final JwtService jwtService;
+        private final OrganizerService organizerService;
 
-        public AuthController(UserService userService, JwtService jwtService) {
+        public AuthController(UserService userService, JwtService jwtService, OrganizerService organizerService) {
                 this.userService = userService;
                 this.jwtService = jwtService;
+                this.organizerService = organizerService;
         }
 
         @PostMapping("/register")
@@ -45,6 +50,13 @@ public class AuthController {
                                 user.getRole().name(),
                                 List.of());
                 return new ApiResponse<>(true, "User registered successfully", response);
+        }
+
+        @PostMapping("/register-organizer")
+        @ResponseStatus(HttpStatus.CREATED)
+        public ApiResponse<OrganizerResponse> registerOrganizer(@Valid @RequestBody OrganizerRequest request) {
+                OrganizerResponse response = organizerService.createOrganizer(request);
+                return new ApiResponse<>(true, "Organizer registered successfully", response);
         }
 
         @PostMapping("/login")

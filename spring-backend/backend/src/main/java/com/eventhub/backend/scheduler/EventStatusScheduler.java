@@ -22,25 +22,22 @@ public class EventStatusScheduler {
     @Scheduled(fixedRate = 60000) // Run every 60 seconds (1 minute)
     @Transactional
     public void updateEventStatuses() {
-        System.out.println("=== Starting Event Status Update Scheduler ===");
-        
+
         List<Event> allEvents = eventRepository.findAll();
         int updatedCount = 0;
-        
+
         for (Event event : allEvents) {
             try {
                 EventStatus currentStatus = event.getStatus();
                 EventStatus calculatedStatus = EventStatusUtil.getCurrentStatus(event);
-                
+
                 // Skip DRAFT and CANCELLED events (manual overrides)
                 if (currentStatus == EventStatus.DRAFT || currentStatus == EventStatus.CANCELLED) {
                     continue;
                 }
-                
+
                 // Update if status has changed
                 if (!calculatedStatus.equals(currentStatus)) {
-                    System.out.println("Updating event " + event.getId() + " (" + event.getTitle() + 
-                                     ") from " + currentStatus + " to " + calculatedStatus);
                     event.setStatus(calculatedStatus);
                     eventRepository.save(event);
                     updatedCount++;
@@ -49,7 +46,5 @@ public class EventStatusScheduler {
                 System.err.println("Error updating status for event " + event.getId() + ": " + e.getMessage());
             }
         }
-        
-        System.out.println("=== Event Status Update Scheduler Completed. Updated " + updatedCount + " events ===");
     }
 }

@@ -77,6 +77,8 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     List<Event> findByOrganizerOrderByCreatedAtDesc(Organizer organizer);
 
+    org.springframework.data.domain.Page<Event> findByOrganizerOrderByCreatedAtDesc(Organizer organizer, org.springframework.data.domain.Pageable pageable);
+
     @Query(nativeQuery = true, value = """
             SELECT DISTINCT e.* FROM events e
             JOIN venues v ON v.id = e.venue_id

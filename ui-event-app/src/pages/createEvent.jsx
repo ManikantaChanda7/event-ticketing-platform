@@ -177,9 +177,8 @@ export default function CreateEvent() {
       } else {
         eventData.tickets.forEach((t, idx) => {
           if (!t.price || Number(t.price) <= 0) {
-            errors[
-              `ticket_price_${idx}`
-            ] = `${t.section} price must be greater than 0`;
+            errors[`ticket_price_${idx}`] =
+              `${t.section} price must be greater than 0`;
           }
         });
       }
@@ -242,15 +241,21 @@ export default function CreateEvent() {
   }, []);
 
   const handleSubmit = async () => {
-    eventData.startDate = new Date(eventData.startDate).toISOString(); // always UTC
-    eventData.endDate = eventData.endDate
-      ? new Date(eventData.endDate).toISOString()
-      : eventData.startDate;
-
+    // Create a payload with all eventData and map venue -> venueId!
+    const payload = {
+      ...eventData,
+      venueId: eventData.venue,
+      startDate: new Date(eventData.startDate).toISOString(), // always UTC
+      endDate: eventData.endDate
+        ? new Date(eventData.endDate).toISOString()
+        : eventData.startDate,
+    };
     try {
-      await dispatch(createEvent(eventData)).unwrap();
+      await dispatch(createEvent(payload)).unwrap();
       navigate("/dashboard");
-    } catch (err) {}
+    } catch (err) {
+      console.error("Error creating event:", err);
+    }
   };
 
   return (

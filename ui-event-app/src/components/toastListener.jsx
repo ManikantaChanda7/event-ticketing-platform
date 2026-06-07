@@ -317,9 +317,13 @@ export default function ToastListener() {
   // Loop & trigger toast automatically
   useEffect(() => {
     toastRules.forEach((rule) => {
-      if (rule.loading) toast.loading(rule.loadingMessage);
-      else if (rule.error) toast.error(rule.error);
-      else if (rule.success) {
+      if (rule.loading) {
+        toast.loading(rule.loadingMessage);
+      } else if (rule.error) {
+        toast.hide();
+        toast.error(rule.error);
+      } else if (rule.success) {
+        toast.hide();
         toast.success(rule.successMessage);
         if (rule.onSuccess) rule.onSuccess();
       }

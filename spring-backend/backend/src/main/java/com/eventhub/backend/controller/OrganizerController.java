@@ -29,7 +29,6 @@ public class OrganizerController {
     @PostMapping
     public ApiResponse<OrganizerResponse> createOrganizer(
             @Valid @RequestBody OrganizerRequest request) {
-        System.out.println("CREATE ORGANIZER HIT");
         OrganizerResponse response = organizerService.createOrganizer(request);
         return new ApiResponse<>(true, "Organizer created successfully", response);
     }

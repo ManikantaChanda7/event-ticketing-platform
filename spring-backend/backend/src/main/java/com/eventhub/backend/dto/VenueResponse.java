@@ -11,6 +11,7 @@ import java.util.Map;
 public class VenueResponse {
 
     private Long id;
+    private Long _id; // For Node.js compatibility
     private String name;
     private String address;
     private String city;
@@ -20,4 +21,5 @@ public class VenueResponse {
     private Double latitude;
     private Double longitude;
     private List<Map<String, Object>> seatingLayout;
+    private Map<String, Object> location;
 }

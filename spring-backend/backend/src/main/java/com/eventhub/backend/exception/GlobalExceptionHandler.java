@@ -43,6 +43,21 @@ public class GlobalExceptionHandler {
                 return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
         }
 
+        @ExceptionHandler(IllegalArgumentException.class)
+        public ResponseEntity<ApiResponse<Map<String, String>>> handleIllegalArgument(
+                        IllegalArgumentException ex) {
+
+                Map<String, String> errors = new HashMap<>();
+                errors.put("venueId", ex.getMessage());
+
+                ApiResponse<Map<String, String>> response = new ApiResponse<>(
+                                false,
+                                "Validation failed",
+                                errors);
+
+                return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        }
+
         // @ExceptionHandler(Exception.class)
         // public ResponseEntity<ApiResponse<Void>> handleGenericException(
         // Exception ex) {

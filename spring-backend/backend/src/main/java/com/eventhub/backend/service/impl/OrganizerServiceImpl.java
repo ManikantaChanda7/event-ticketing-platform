@@ -49,21 +49,16 @@ public class OrganizerServiceImpl implements OrganizerService {
                                         "User already has an organizer profile");
                 }
 
-                organizer.setOrgName(
-                                request.getOrganizationName());
+                // Use new fields first, fall back to old ones
+                String orgName = request.getOrgName() != null ? request.getOrgName() : request.getOrganizationName();
+                String orgDescription = request.getOrgDescription() != null ? request.getOrgDescription() : request.getDescription();
 
-                organizer.setOrgEmail(
-                                request.getOrgEmail());
-
-                organizer.setOrgDescription(
-                                request.getDescription());
-
-                organizer.setOrganizerProfileImage(
-                                request.getOrganizerProfileImage());
-
-                organizer.setOrganizerBannerImage(
-                                request.getOrganizerBannerImage());
-
+                organizer.setOrgName(orgName);
+                organizer.setOrgEmail(request.getOrgEmail());
+                organizer.setOrgDescription(orgDescription);
+                organizer.setPhone(request.getPhone());
+                organizer.setOrganizerProfileImage(request.getOrganizerProfileImage());
+                organizer.setOrganizerBannerImage(request.getOrganizerBannerImage());
                 organizer.setUser(user);
 
                 user.setRole(Role.ORGANIZER);

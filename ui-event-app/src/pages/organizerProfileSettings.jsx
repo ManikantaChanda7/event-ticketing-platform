@@ -304,33 +304,45 @@ export default function ProfileSettings() {
     setError("");
     if (!file) return;
 
-    const resizedBlob = await resizeImage(file, targetWidth, targetHeight);
-    if (resizedBlob) {
-      const resizedFile = new File([resizedBlob], file.name, {
-        type: "image/jpeg",
-      });
+    try {
+      const resizedBlob = await resizeImage(file, targetWidth, targetHeight);
+      if (resizedBlob) {
+        const resizedFile = new File([resizedBlob], file.name, {
+          type: "image/jpeg",
+        });
 
-      const formData = new FormData();
-      formData.append("image", resizedFile);
+        const formData = new FormData();
+        formData.append("image", resizedFile);
 
-      const res = await dispatch(uploadImage({ formData })).unwrap();
+        const res = await dispatch(uploadImage({ formData })).unwrap();
 
-      // update your local form state
-      if (type === "banner") {
-        setFormData((prev) => ({
-          ...prev,
-          organizerBannerImage: res.url,
-        }));
+        // update your local form state
+        if (type === "banner") {
+          setFormData((prev) => ({
+            ...prev,
+            organizerBannerImage: res.url,
+          }));
+        }
+
+        if (type === "profile") {
+          setFormData((prev) => ({
+            ...prev,
+            organizerProfileImage: res.url,
+          }));
+        }
+
+        setFileNames((prev) => ({ ...prev, [type]: file.name }));
       }
-
-      if (type === "profile") {
-        setFormData((prev) => ({
-          ...prev,
-          organizerProfileImage: res.url,
-        }));
+    } catch (err) {
+      console.error("Upload failed:", err);
+      // Set error message properly
+      if (err?.message) {
+        setError(err.message);
+      } else if (typeof err === "string") {
+        setError(err);
+      } else {
+        setError("Image upload failed. Try again.");
       }
-
-      setFileNames((prev) => ({ ...prev, [type]: file.name }));
     }
   };
 

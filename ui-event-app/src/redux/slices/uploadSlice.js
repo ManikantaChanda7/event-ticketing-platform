@@ -8,10 +8,11 @@ export const uploadImage = createAsyncThunk(
     try {
       const res = await api.post("upload/uploadImage", formData, {
         headers: { "Content-Type": "multipart/form-data" },
+        _skipToast: true,
       });
 
       return {
-        url: res.data.url,
+        url: res.data.data.url,
       };
     } catch (err) {
       return rejectWithValue(
@@ -37,6 +38,9 @@ const uploadSlice = createSlice({
     resetUploadState: (state) => {
       state.loading = false;
       state.error = null;
+      state.uploadLoading = false;
+      state.uploadError = null;
+      state.uploadSucess = false;
     },
   },
 

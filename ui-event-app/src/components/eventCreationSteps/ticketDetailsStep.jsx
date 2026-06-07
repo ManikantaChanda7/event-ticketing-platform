@@ -5,13 +5,16 @@ import {
   Grid,
   TextField,
   Typography,
+  createFilterOptions,
 } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useDispatch } from "react-redux";
 import {
   fetchVenueAvailability,
   fetchVenueInfo,
 } from "../../redux/slices/eventSlice";
+
+const filter = createFilterOptions();
 
 const TicketDetailsStep = ({
   eventData,
@@ -26,22 +29,81 @@ const TicketDetailsStep = ({
   const [selectedVenue, setSelectedVenue] = useState(null);
   const [loading, setLoading] = useState(false);
   const [openSection, setOpenSection] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  
+  // Ref to track last request params to avoid duplicates
+  const lastRequestRef = useRef({ startDate: null, endDate: null, search: null });
 
-  // 🔹 Fetch available venues when startDate changes
-  useEffect(() => {
+  // 🔹 Debounce search
+  const debounce = (func, wait) => {
+    let timeout;
+    const debouncedFunc = (...args) => {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+    debouncedFunc.cancel = () => clearTimeout(timeout);
+    return debouncedFunc;
+  };
+
+  // 🔹 Fetch available venues
+  const fetchVenues = useCallback((search = "") => {
+    if (!eventData.startDate) return;
+    
+    // Check if this is a duplicate request
+    const currentRequest = {
+      startDate: eventData.startDate,
+      endDate: eventData.endDate,
+      search: search
+    };
+    
+    if (
+      lastRequestRef.current.startDate === currentRequest.startDate &&
+      lastRequestRef.current.endDate === currentRequest.endDate &&
+      lastRequestRef.current.search === currentRequest.search
+    ) {
+      return;
+    }
+    
+    // Update last request
+    lastRequestRef.current = currentRequest;
+    
     setLoading(true);
-
     dispatch(
       fetchVenueAvailability({
         startDate: eventData.startDate,
         endDate: eventData.endDate,
+        search,
       })
     )
       .unwrap()
-      .then((venues) => setVenues(venues))
+      .then((venues) => {
+        // Deduplicate venues by id
+        const uniqueVenues = venues.filter((v, index, self) =>
+          index === self.findIndex((t) => t._id === v._id)
+        );
+        setVenues(uniqueVenues);
+      })
       .catch((err) => console.error("❌ Failed to fetch venues:", err))
       .finally(() => setLoading(false));
-  }, [eventData.startDate, eventData.endDate]);
+  }, [eventData.startDate, eventData.endDate, dispatch]);
+
+  // 🔹 Create debounced fetch function - memoized
+  const debouncedFetchVenues = useCallback(debounce((search) => fetchVenues(search), 300), [fetchVenues]);
+
+  // 🔹 Combined effect: fetch venues when date OR search changes
+  useEffect(() => {
+    if (searchQuery) {
+      debouncedFetchVenues(searchQuery);
+    } else {
+      fetchVenues(searchQuery);
+    }
+    // Cleanup the timeout
+    return () => debouncedFetchVenues.cancel && debouncedFetchVenues.cancel();
+  }, [searchQuery, debouncedFetchVenues, fetchVenues]);
 
   // 🔹 Restore selected venue when returning to this step
   useEffect(() => {
@@ -186,12 +248,17 @@ const TicketDetailsStep = ({
       <Autocomplete
         options={venues.map((v) => ({
           id: v._id,
-          label: `${v.name}${v.city ? `, ${v.city}` : ""}`,
+          label: `${v.name}${v.city ? ", " + v.city : ""}`,
           city: v.city,
           state: v.state,
           coordinates: v.location?.coordinates,
         }))}
+        getOptionKey={(opt) => opt.id} // Use unique venue id as key
         getOptionLabel={(opt) => opt.label || ""}
+        filterOptions={(options) => options} // Disable local filtering since we use API search
+        onInputChange={(_, newInputValue) => {
+          setSearchQuery(newInputValue);
+        }}
         value={selectedVenue}
         loading={loading}
         onChange={handleVenueSelect}
@@ -200,7 +267,7 @@ const TicketDetailsStep = ({
           <TextField
             {...params}
             label="Select Venue"
-            placeholder="Available venues for selected dates"
+            placeholder="Search available venues..."
             InputProps={{
               ...params.InputProps,
               endAdornment: (

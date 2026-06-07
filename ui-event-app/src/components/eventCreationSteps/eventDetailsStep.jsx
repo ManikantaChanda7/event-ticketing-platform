@@ -57,7 +57,7 @@ const StyledLabel = ({ children }) => (
 
 export default function EventDetailsStep({
   eventData,
-  categories,
+  categories = [],
   handleInputChange,
   errors,
 }) {
@@ -182,7 +182,7 @@ export default function EventDetailsStep({
               helperText={errors.startDate}
               InputLabelProps={{ shrink: true }}
               inputProps={{ min: minAllowedDate }}
-              InputProps={inputStyle}
+              sx={inputStyle.sx}
             />
           </Grid>
 
@@ -195,7 +195,7 @@ export default function EventDetailsStep({
               onChange={(e) => handleChange("startTime", e.target.value)}
               error={!!errors.startTime}
               helperText={errors.startTime}
-              InputProps={inputStyle}
+              sx={inputStyle.sx}
             />
           </Grid>
 
@@ -208,7 +208,7 @@ export default function EventDetailsStep({
               onChange={(e) => handleChange("endTime", e.target.value)}
               error={!!errors.endTime}
               helperText={errors.endTime}
-              InputProps={inputStyle}
+              sx={inputStyle.sx}
             />
           </Grid>
         </Grid>
@@ -228,7 +228,7 @@ export default function EventDetailsStep({
               helperText={errors.startDate}
               InputLabelProps={{ shrink: true }}
               inputProps={{ min: minAllowedDate }}
-              InputProps={inputStyle}
+              sx={inputStyle.sx}
             />
           </Grid>
 
@@ -243,7 +243,7 @@ export default function EventDetailsStep({
               helperText={errors.endDate}
               InputLabelProps={{ shrink: true }}
               inputProps={{ min: eventData.startDate || minAllowedDate }}
-              InputProps={inputStyle}
+              sx={inputStyle.sx}
             />
           </Grid>
 
@@ -253,9 +253,10 @@ export default function EventDetailsStep({
               fullWidth
               type="time"
               value={eventData.startTime}
+              onChange={(e) => handleChange("startTime", e.target.value)}
               error={!!errors.startTime}
               helperText={errors.startTime}
-              InputProps={inputStyle}
+              sx={inputStyle.sx}
             />
           </Grid>
 
@@ -265,9 +266,10 @@ export default function EventDetailsStep({
               fullWidth
               type="time"
               value={eventData.endTime}
+              onChange={(e) => handleChange("endTime", e.target.value)}
               error={!!errors.endTime}
               helperText={errors.endTime}
-              InputProps={inputStyle}
+              sx={inputStyle.sx}
             />
           </Grid>
         </Grid>
@@ -288,7 +290,7 @@ export default function EventDetailsStep({
                 helperText={errors.startDate}
                 InputLabelProps={{ shrink: true }}
                 inputProps={{ min: minAllowedDate }}
-                InputProps={inputStyle}
+                sx={inputStyle.sx}
               />
             </Grid>
 
@@ -303,7 +305,7 @@ export default function EventDetailsStep({
                 helperText={errors.endDate}
                 InputLabelProps={{ shrink: true }}
                 inputProps={{ min: eventData.startDate || minAllowedDate }}
-                InputProps={inputStyle}
+                sx={inputStyle.sx}
               />
             </Grid>
           </Grid>
@@ -340,9 +342,10 @@ export default function EventDetailsStep({
                 fullWidth
                 type="time"
                 value={eventData.startTime}
+                onChange={(e) => handleChange("startTime", e.target.value)}
                 error={!!errors.startTime}
                 helperText={errors.startTime}
-                InputProps={inputStyle}
+                sx={inputStyle.sx}
               />
             </Grid>
 
@@ -352,9 +355,10 @@ export default function EventDetailsStep({
                 fullWidth
                 type="time"
                 value={eventData.endTime}
+                onChange={(e) => handleChange("endTime", e.target.value)}
                 error={!!errors.endTime}
                 helperText={errors.endTime}
-                InputProps={inputStyle}
+                sx={inputStyle.sx}
               />
             </Grid>
           </Grid>

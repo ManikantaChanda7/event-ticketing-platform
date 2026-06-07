@@ -101,6 +101,7 @@ public class SeedData implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) throws Exception {
+        // Uncomment below line to seed the database with sample data
         // seedDatabase();
     }
 

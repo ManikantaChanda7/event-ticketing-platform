@@ -114,9 +114,6 @@ public class BookingServiceImpl implements BookingService {
                                 .stream()
                                 .toList();
                 booking.setTicketsSummary(ticketSummaries);
-                System.out.println("Seats = " + bookedSeats.size());
-                System.out.println("Ticket summaries = " + ticketSummaries.size());
-                System.out.println("Booking before save = " + booking);
                 // booking = bookingRepository.save(booking);
                 booking = bookingRepository.saveAndFlush(booking);
 

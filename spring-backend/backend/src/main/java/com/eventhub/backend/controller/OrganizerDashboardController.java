@@ -97,17 +97,9 @@ public class OrganizerDashboardController {
     public ApiResponse<Map<String, Object>> getSalesStats(Authentication authentication) {
         Organizer organizer = getOrganizerFromUser(authentication);
 
-        List<com.eventhub.backend.entity.Booking> bookings = bookingRepository.findAll();
-        long totalTicketsSold = 0;
-        double totalRevenue = 0.0;
-        for (com.eventhub.backend.entity.Booking booking : bookings) {
-            if (booking.getEvent() != null
-                    && booking.getEvent().getOrganizer() != null
-                    && booking.getEvent().getOrganizer().getId().equals(organizer.getId())) {
-                totalTicketsSold += getBookingTicketCount(booking);
-                totalRevenue += getBookingAmount(booking);
-            }
-        }
+        long totalTicketsSold = bookingRepository.getTotalTicketsSoldByOrganizer(organizer);
+        Double totalRevenue = bookingRepository.getTotalRevenueByOrganizer(organizer);
+        if (totalRevenue == null) totalRevenue = 0.0;
 
         Map<String, Object> response = new HashMap<>();
         response.put("totalTicketsSold", totalTicketsSold);
@@ -139,28 +131,11 @@ public class OrganizerDashboardController {
                 })
                 .collect(Collectors.toList());
 
-        Map<String, Double> revenueByCategoryMap = new HashMap<>();
-
-        List<com.eventhub.backend.entity.Booking> bookings = bookingRepository.findAll();
-
-        for (com.eventhub.backend.entity.Booking booking : bookings) {
-            if (booking.getEvent() != null
-                    && booking.getEvent().getOrganizer() != null
-                    && booking.getEvent().getOrganizer().getId().equals(organizer.getId())) {
-
-                String category = booking.getEvent().getCategory();
-                revenueByCategoryMap.merge(
-                        category,
-                        getBookingAmount(booking),
-                        Double::sum);
-            }
-        }
-
-        List<Map<String, Object>> revenueByCategory = revenueByCategoryMap.entrySet().stream()
+        List<Map<String, Object>> revenueByCategory = bookingRepository.getRevenueByCategory(organizer).stream()
                 .map(entry -> {
                     Map<String, Object> rev = new HashMap<>();
-                    rev.put("_id", entry.getKey());
-                    rev.put("revenue", entry.getValue());
+                    rev.put("_id", entry.get("category"));
+                    rev.put("revenue", entry.get("revenue"));
                     return rev;
                 })
                 .collect(Collectors.toList());
@@ -176,42 +151,7 @@ public class OrganizerDashboardController {
     public ApiResponse<Map<String, Object>> getTopSellingEvents(Authentication authentication) {
         try {
             Organizer organizer = getOrganizerFromUser(authentication);
-
-            List<com.eventhub.backend.entity.Booking> bookings = bookingRepository.findAll();
-            Map<Long, Map<String, Object>> eventStats = new HashMap<>();
-
-            for (com.eventhub.backend.entity.Booking booking : bookings) {
-                if (booking.getEvent() == null
-                        || booking.getEvent().getOrganizer() == null
-                        || !booking.getEvent().getOrganizer().getId().equals(organizer.getId())) {
-                    continue;
-                }
-
-                Event event = booking.getEvent();
-                Long eventId = event.getId();
-
-                eventStats.compute(eventId, (key, existing) -> {
-                    if (existing == null) {
-                        existing = new HashMap<>();
-                        existing.put("title", event.getTitle());
-                        existing.put("ticketsSold", getBookingTicketCount(booking));
-                        existing.put("revenue", getBookingAmount(booking));
-                    } else {
-                        existing.put("ticketsSold",
-                                ((Number) existing.get("ticketsSold")).longValue() + getBookingTicketCount(booking));
-                        existing.put("revenue",
-                                ((Number) existing.get("revenue")).doubleValue() + getBookingAmount(booking));
-                    }
-                    return existing;
-                });
-            }
-
-            List<Map<String, Object>> topSelling = eventStats.values().stream()
-                    .sorted((a, b) -> Long.compare(
-                            ((Number) b.get("ticketsSold")).longValue(),
-                            ((Number) a.get("ticketsSold")).longValue()))
-                    .limit(3)
-                    .collect(Collectors.toList());
+            List<Map<String, Object>> topSelling = bookingRepository.getTopSellingEvents(organizer);
 
             Map<String, Object> topSellingData = new HashMap<>();
             topSellingData.put("topSelling", topSelling);
@@ -257,13 +197,11 @@ public class OrganizerDashboardController {
             Authentication authentication) {
         Organizer organizer = getOrganizerFromUser(authentication);
 
-        List<Event> events = eventRepository.findByOrganizerOrderByCreatedAtDesc(organizer);
+        org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(
+                page - 1, limit, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt"));
+        org.springframework.data.domain.Page<Event> eventPage = eventRepository.findByOrganizerOrderByCreatedAtDesc(organizer, pageable);
 
-        int total = events.size();
-        int startIndex = (page - 1) * limit;
-        int endIndex = Math.min(startIndex + limit, total);
-
-        List<EventSummaryResponse> paginatedEvents = events.subList(startIndex, endIndex)
+        List<EventSummaryResponse> paginatedEvents = eventPage.getContent()
                 .stream()
                 .map(this::mapToSummary)
                 .collect(Collectors.toList());
@@ -272,10 +210,10 @@ public class OrganizerDashboardController {
         response.put("data", paginatedEvents);
 
         Map<String, Object> pagination = new HashMap<>();
-        pagination.put("total", total);
+        pagination.put("total", eventPage.getTotalElements());
         pagination.put("page", page);
         pagination.put("limit", limit);
-        pagination.put("totalPages", (int) Math.ceil((double) total / limit));
+        pagination.put("totalPages", eventPage.getTotalPages());
         response.put("pagination", pagination);
 
         return new ApiResponse<>(true, "Events fetched successfully", response);

@@ -9,31 +9,33 @@ export const connectWebSocket = (onMessageCallback) => {
   const socket = new SockJS("http://localhost:8080/ws");
   stompClient = Stomp.over(socket);
 
-  stompClient.connect({}, () => {
-    connected = true;
-    console.log("WebSocket connected");
+  stompClient.connect(
+    {},
+    () => {
+      connected = true;
 
-    // Subscribe to seat updates
-    const subscription = stompClient.subscribe("/topic/seats", (message) => {
-      const seatUpdate = JSON.parse(message.body);
-      if (onMessageCallback) {
-        onMessageCallback(seatUpdate);
-      }
-    });
-    subscriptions.push(subscription);
-  }, (error) => {
-    console.error("WebSocket connection error:", error);
-    connected = false;
-  });
+      // Subscribe to seat updates
+      const subscription = stompClient.subscribe("/topic/seats", (message) => {
+        const seatUpdate = JSON.parse(message.body);
+        if (onMessageCallback) {
+          onMessageCallback(seatUpdate);
+        }
+      });
+      subscriptions.push(subscription);
+    },
+    (error) => {
+      console.error("WebSocket connection error:", error);
+      connected = false;
+    },
+  );
 };
 
 export const disconnectWebSocket = () => {
   if (stompClient && connected) {
-    subscriptions.forEach(sub => sub.unsubscribe());
+    subscriptions.forEach((sub) => sub.unsubscribe());
     subscriptions = [];
     stompClient.disconnect(() => {
       connected = false;
-      console.log("WebSocket disconnected");
     });
   }
 };

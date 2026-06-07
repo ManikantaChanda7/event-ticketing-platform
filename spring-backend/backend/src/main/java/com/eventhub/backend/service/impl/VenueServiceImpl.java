@@ -87,7 +87,7 @@ public class VenueServiceImpl implements VenueService {
         venueRepository.deleteById(id);
     }
 
-    private VenueResponse mapToResponse(Venue venue) {
+    public VenueResponse mapToResponse(Venue venue) {
         List<Map<String, Object>> seatingLayout = null;
         if (venue.getSeatingLayout() != null && !venue.getSeatingLayout().isEmpty()) {
             try {
@@ -110,8 +110,16 @@ public class VenueServiceImpl implements VenueService {
             }
         }
 
+        Map<String, Object> location = null;
+        if (venue.getLatitude() != null && venue.getLongitude() != null) {
+            location = new HashMap<>();
+            location.put("type", "Point");
+            location.put("coordinates", List.of(venue.getLongitude(), venue.getLatitude()));
+        }
+
         return VenueResponse.builder()
                 .id(venue.getId())
+                ._id(venue.getId())
                 .name(venue.getName())
                 .address(venue.getAddress())
                 .city(venue.getCity())
@@ -121,6 +129,7 @@ public class VenueServiceImpl implements VenueService {
                 .latitude(venue.getLatitude())
                 .longitude(venue.getLongitude())
                 .seatingLayout(seatingLayout)
+                .location(location)
                 .build();
     }
 }

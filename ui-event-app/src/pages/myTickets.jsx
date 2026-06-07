@@ -216,7 +216,6 @@ function TicketModal({ ticket, onClose }) {
 
 function TicketCard({ ticket, onOpen }) {
   const isPast = ticket.status === "past";
-  console.log("ff", ticket);
 
   return (
     <div

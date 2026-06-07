@@ -121,6 +121,14 @@ const UploadImagesStep = ({ eventData, handleInputChange, errors }) => {
       setFileNames((prev) => ({ ...prev, [type]: file.name }));
     } catch (err) {
       console.error("Upload failed:", err);
+      // Set error message properly
+      if (err?.message) {
+        setError(err.message);
+      } else if (typeof err === "string") {
+        setError(err);
+      } else {
+        setError("Image upload failed. Try again.");
+      }
     } finally {
       // Stop loader
       setUploading((prev) => ({ ...prev, [type]: false }));

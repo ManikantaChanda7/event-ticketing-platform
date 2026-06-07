@@ -78,4 +78,33 @@ public interface BookingRepository
         List<Map<String, Object>> getTicketTypeStatsBySession(@Param("session") Session session);
 
         List<Booking> findByEvent(Event event);
+
+        @Query("""
+                        SELECT new map(
+                            e.category as category,
+                            SUM(b.totalAmount) as revenue
+                        )
+                        FROM Booking b
+                        JOIN b.event e
+                        WHERE e.organizer = :organizer
+                        GROUP BY e.category
+                        """)
+        List<Map<String, Object>> getRevenueByCategory(@Param("organizer") Organizer organizer);
+
+        @Query("""
+                        SELECT new map(
+                            e.id as eventId,
+                            e.title as title,
+                            COALESCE(COUNT(bs), 0) as ticketsSold,
+                            COALESCE(SUM(b.totalAmount), 0) as revenue
+                        )
+                        FROM Booking b
+                        LEFT JOIN b.seats bs
+                        JOIN b.event e
+                        WHERE e.organizer = :organizer
+                        GROUP BY e.id, e.title
+                        ORDER BY ticketsSold DESC
+                        LIMIT 3
+                        """)
+        List<Map<String, Object>> getTopSellingEvents(@Param("organizer") Organizer organizer);
 }

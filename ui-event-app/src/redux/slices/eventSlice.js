@@ -217,7 +217,7 @@ export const getCategories = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const res = await api.get("events/categories");
-      return res.data.categories; // return categories array
+      return res.data.data; // return categories array from data field
     } catch (err) {
       return rejectWithValue(
         err.response?.data || "Failed to fetch categories",
@@ -246,12 +246,13 @@ export const updateEventImage = createAsyncThunk(
 
 export const fetchVenueAvailability = createAsyncThunk(
   "event/fetchVenueAvailability",
-  async ({ startDate, endDate }, { rejectWithValue }) => {
+  async ({ startDate, endDate, search }, { rejectWithValue }) => {
     try {
       const res = await api.get("venue/availability", {
         params: {
           startDate,
           endDate: endDate || undefined,
+          search: search !== undefined && search !== null ? search : "", // Always send search as empty string if not provided
         },
       });
 

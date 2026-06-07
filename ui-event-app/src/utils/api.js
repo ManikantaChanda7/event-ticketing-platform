@@ -50,6 +50,9 @@ api.interceptors.response.use(
       error.response?.data?.message ||
       error.response?.data?.error ||
       "Something went wrong";
+      
+    // Skip toast if _skipToast is true
+    const skipToast = error.config?._skipToast;
 
     if (
       status === 401 &&
@@ -112,9 +115,11 @@ api.interceptors.response.use(
     /* --------------------------------------------------------------
      🟡 2. NORMAL API FAILURE ERROR
     ----------------------------------------------------------------*/
-    toastRef.current?.error(message);
+    if (!skipToast) {
+      toastRef.current?.error(message);
+    }
 
-    return Promise.reject(error);
+    return Promise.reject(error.response?.data || error);
   },
 );
 
