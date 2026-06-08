@@ -457,8 +457,8 @@ public class EventServiceImpl implements EventService {
 
                 if (interestedEvents == null
                                 || interestedEvents.isEmpty()) {
-                        // Return trending events as fallback for users with no interests
-                        return getTrendingEvents();
+                        // Return empty list if no recommendations
+                        return new ArrayList<>();
                 }
 
                 List<Long> interactedEventIds = interestedEvents.stream()

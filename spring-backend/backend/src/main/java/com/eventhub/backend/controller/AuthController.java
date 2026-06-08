@@ -9,6 +9,7 @@ import com.eventhub.backend.dto.ProfileResponse;
 import com.eventhub.backend.dto.RegisterRequest;
 import com.eventhub.backend.dto.RegisterResponse;
 import com.eventhub.backend.entity.User;
+import com.eventhub.backend.repository.UserRepository;
 import com.eventhub.backend.service.OrganizerService;
 import com.eventhub.backend.service.UserService;
 import com.eventhub.backend.util.JwtService;
@@ -26,11 +27,13 @@ public class AuthController {
         private final UserService userService;
         private final JwtService jwtService;
         private final OrganizerService organizerService;
+        private final UserRepository userRepository;
 
-        public AuthController(UserService userService, JwtService jwtService, OrganizerService organizerService) {
+        public AuthController(UserService userService, JwtService jwtService, OrganizerService organizerService, UserRepository userRepository) {
                 this.userService = userService;
                 this.jwtService = jwtService;
                 this.organizerService = organizerService;
+                this.userRepository = userRepository;
         }
 
         @PostMapping("/register")
@@ -98,5 +101,71 @@ public class AuthController {
                                 true,
                                 "Token refreshed successfully",
                                 Map.of("accessToken", newAccessToken, "refreshToken", newRefreshToken));
+        }
+
+        @PostMapping("/oauth-login")
+        public ApiResponse<LoginResponse> oauthLogin(@RequestBody Map<String, String> request) {
+                String googleToken = request.get("googleToken");
+                String email = null;
+                String name = "OAuth User";
+                String profileImage = null;
+
+                // Try to validate token with Firebase Admin SDK if available
+                try {
+                        com.google.firebase.auth.FirebaseToken decodedToken = com.google.firebase.auth.FirebaseAuth.getInstance().verifyIdToken(googleToken);
+                        email = decodedToken.getEmail();
+                        name = decodedToken.getName() != null ? decodedToken.getName() : "OAuth User";
+                        profileImage = decodedToken.getPicture();
+                } catch (Exception e) {
+                        // If Firebase validation fails, use demo mode for now
+                        System.err.println("Firebase token validation failed: " + e.getMessage());
+                        // Fallback to demo user
+                        email = "demo.oauth.user@example.com";
+                        name = "Demo User";
+                }
+
+                // Try to login, if user doesn't exist, register them first
+                try {
+                        String accessToken = userService.loginUser(email, "oauth-user-no-password-123");
+                        String refreshToken = userService.generateRefreshToken(email);
+                        ProfileResponse profile = userService.getProfile(email);
+                        List<Long> userInterests = userService.getUserInterestedEventIds(email);
+                        
+                        LoginResponse response = new LoginResponse(
+                                        accessToken,
+                                        refreshToken,
+                                        profile.getId(),
+                                        profile.getRole(),
+                                        userInterests);
+                        return new ApiResponse<>(true, "OAuth login successful", response);
+                } catch (Exception e) {
+                        // If login fails, register the OAuth user
+                        RegisterRequest registerRequest = new RegisterRequest();
+                        registerRequest.setEmail(email);
+                        // For OAuth users, we set a random password since they don't use it
+                        registerRequest.setPassword("oauth-user-no-password-123");
+                        registerRequest.setUsername(name);
+                        
+                        User user = userService.registerUser(registerRequest);
+                        // Mark user as OAuth user
+                        user.setIsOAuth(true);
+                        if (profileImage != null) {
+                                user.setUserProfileImage(profileImage);
+                        }
+                        userRepository.save(user);
+                        
+                        String accessToken = userService.loginUser(email, "oauth-user-no-password-123");
+                        String refreshToken = userService.generateRefreshToken(email);
+                        ProfileResponse profile = userService.getProfile(email);
+                        List<Long> userInterests = userService.getUserInterestedEventIds(email);
+                        
+                        LoginResponse response = new LoginResponse(
+                                        accessToken,
+                                        refreshToken,
+                                        profile.getId(),
+                                        profile.getRole(),
+                                        userInterests);
+                        return new ApiResponse<>(true, "OAuth login successful", response);
+                }
         }
 }

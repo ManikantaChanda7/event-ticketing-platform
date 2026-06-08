@@ -28,3 +28,8 @@ ui-event-app/build/
 .DS_Store
 *.log
 .vscode/
+
+# Secrets
+serviceAccountKey.json
+*.pem
+*.key
