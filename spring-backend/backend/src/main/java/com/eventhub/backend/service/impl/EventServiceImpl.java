@@ -327,9 +327,8 @@ public class EventServiceImpl implements EventService {
         @Override
         public List<EventSummaryResponse> getAllEvents() {
 
-                return eventRepository.findAll()
+                return eventRepository.findAllExcludingStatus(EventStatus.COMPLETED)
                                 .stream()
-                                .filter(event -> event.getStatus() != EventStatus.COMPLETED)
                                 .map(this::mapToSummary)
                                 .collect(Collectors.toList());
         }
@@ -338,9 +337,8 @@ public class EventServiceImpl implements EventService {
         public List<EventSummaryResponse> getEventsByCategory(String category) {
 
                 return eventRepository
-                                .findByCategory(category)
+                                .findByCategoryExcludingStatus(category, EventStatus.COMPLETED)
                                 .stream()
-                                .filter(event -> event.getStatus() != EventStatus.COMPLETED)
                                 .map(this::mapToSummary)
                                 .collect(Collectors.toList());
         }
@@ -349,10 +347,8 @@ public class EventServiceImpl implements EventService {
         public List<EventSummaryResponse> searchEvents(String keyword) {
 
                 return eventRepository
-                                .findByTitleContainingIgnoreCase(
-                                                keyword)
+                                .findByTitleContainingIgnoreCaseExcludingStatus(keyword, EventStatus.COMPLETED)
                                 .stream()
-                                .filter(event -> event.getStatus() != EventStatus.COMPLETED)
                                 .map(this::mapToSummary)
                                 .collect(Collectors.toList());
         }
@@ -505,74 +501,34 @@ public class EventServiceImpl implements EventService {
                                 .getAuthentication()
                                 .getName();
 
-                User user = userRepository
-                                .findByEmailWithInterests(email)
-                                .orElseThrow(() -> new ResourceNotFoundException(
-                                                "User not found"));
-
-                Set<Event> interestedEvents = user.getInterestedEvents();
-
-                if (interestedEvents == null
-                                || interestedEvents.isEmpty()) {
-                        return PaginatedResponse.<EventSummaryResponse>builder()
-                                        .data(new ArrayList<>())
-                                        .totalPages(0)
-                                        .totalItems(0)
-                                        .currentPage(page != null ? page : 1)
-                                        .limit(limit != null ? limit : 8)
-                                        .build();
-                }
-
-                List<Event> events = new ArrayList<>(interestedEvents);
-                long totalItems = events.size();
-
-                // Filter by status if provided, otherwise exclude COMPLETED events
-                if (status != null && !status.isEmpty()) {
-                        events = events.stream()
-                                        .filter(event -> {
-                                                EventStatus eventStatus = event.getStatus();
-                                                if (eventStatus == null) {
-                                                        return false;
-                                                }
-                                                return eventStatus.name().equalsIgnoreCase(status);
-                                        })
-                                        .toList();
-                } else {
-                        // Exclude COMPLETED events by default
-                        events = events.stream()
-                                        .filter(event -> event.getStatus() != EventStatus.COMPLETED)
-                                        .toList();
-                }
-                totalItems = events.size();
-
                 int currentPage = page != null ? page : 1;
                 int pageSize = limit != null ? limit : 8;
-                int totalPages = (int) Math.ceil((double) totalItems / pageSize);
 
-                // Apply pagination if provided
-                if (page != null && limit != null) {
-                        int startIndex = (page - 1) * limit;
-                        if (startIndex >= events.size()) {
-                                return PaginatedResponse.<EventSummaryResponse>builder()
-                                                .data(new ArrayList<>())
-                                                .totalPages(totalPages)
-                                                .totalItems(totalItems)
-                                                .currentPage(currentPage)
-                                                .limit(pageSize)
-                                                .build();
+                // Use proper database pagination instead of in-memory pagination
+                org.springframework.data.domain.Pageable pageable =
+                        org.springframework.data.domain.PageRequest.of(currentPage - 1, pageSize);
+
+                EventStatus statusFilter = null;
+                if (status != null && !status.isEmpty()) {
+                        try {
+                                statusFilter = EventStatus.valueOf(status.toUpperCase());
+                        } catch (IllegalArgumentException e) {
+                                // Invalid status, default to excluding COMPLETED
                         }
-                        int endIndex = Math.min(startIndex + limit, events.size());
-                        events = events.subList(startIndex, endIndex);
                 }
 
-                List<EventSummaryResponse> data = events.stream()
+                org.springframework.data.domain.Page<Event> eventPage =
+                        userRepository.findInterestedEventsByEmail(email, statusFilter, pageable);
+
+                List<EventSummaryResponse> data = eventPage.getContent()
+                                .stream()
                                 .map(this::mapToSummary)
                                 .toList();
 
                 return PaginatedResponse.<EventSummaryResponse>builder()
                                 .data(data)
-                                .totalPages(totalPages)
-                                .totalItems(totalItems)
+                                .totalPages(eventPage.getTotalPages())
+                                .totalItems(eventPage.getTotalElements())
                                 .currentPage(currentPage)
                                 .limit(pageSize)
                                 .build();
@@ -722,6 +678,40 @@ public class EventServiceImpl implements EventService {
         }
 
         @Override
+        public EventResponse updateEventImage(Long id, java.util.Map<String, String> request) {
+                String email = SecurityContextHolder
+                                .getContext()
+                                .getAuthentication()
+                                .getName();
+
+                User user = userRepository.findByEmail(email)
+                                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+                Organizer organizer = organizerRepository.findByUser(user)
+                                .orElseThrow(() -> new ResourceNotFoundException("Organizer not found"));
+
+                Event event = eventRepository.findById(id)
+                                .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
+
+                // Ownership Validation
+                if (!event.getOrganizer().getId()
+                                .equals(organizer.getId())) {
+                        throw new RuntimeException(
+                                        "You are not allowed to update this event");
+                }
+
+                if (request.containsKey("bannerImage")) {
+                        event.setBannerImage(request.get("bannerImage"));
+                }
+                if (request.containsKey("thumbnailImage")) {
+                        event.setThumbnailImage(request.get("thumbnailImage"));
+                }
+
+                eventRepository.save(event);
+                return mapToResponse(event);
+        }
+
+        @Override
         public void deleteEvent(Long id) {
 
                 String email = SecurityContextHolder
@@ -808,44 +798,12 @@ public class EventServiceImpl implements EventService {
         @Override
         public List<EventSummaryResponse> getTrendingEvents() {
 
-                List<EventScore> scores = eventRepository.findAll()
-                                .stream()
-                                .filter(event -> event.getStatus() != EventStatus.COMPLETED)
-                                .map(event -> {
+                // Use optimized single query instead of N+1 pattern
+                List<com.eventhub.backend.dto.EventStatsDTO> eventStats = eventRepository.findTrendingEventsWithStats(EventStatus.COMPLETED);
 
-                                        Long ticketsSold = bookingRepository
-                                                        .getTicketsSold(event);
-
-                                        Double averageRating = event.getAverageRating() == null
-                                                        ? 0.0
-                                                        : event.getAverageRating();
-
-                                        Integer interestedUsers = event.getInterestedUsers() == null
-                                                        ? 0
-                                                        : event.getInterestedUsers();
-
-                                        double score = (averageRating * 10)
-                                                        + interestedUsers
-                                                        + ticketsSold;
-
-                                        EventScore eventScore = new EventScore();
-
-                                        eventScore.setEvent(
-                                                        mapToSummary(event));
-
-                                        eventScore.setScore(score);
-
-                                        return eventScore;
-                                })
-                                .sorted(
-                                                Comparator.comparing(
-                                                                EventScore::getScore)
-                                                                .reversed())
+                return eventStats.stream()
                                 .limit(10)
-                                .toList();
-
-                return scores.stream()
-                                .map(EventScore::getEvent)
+                                .map(stat -> mapToSummary(stat.getEvent()))
                                 .toList();
         }
 
@@ -862,58 +820,13 @@ public class EventServiceImpl implements EventService {
                                 .orElseThrow(() -> new ResourceNotFoundException(
                                                 "User not found"));
 
-                if (user.getPreferredLocationLatitude() == null
-                                || user.getPreferredLocationLongitude() == null) {
+                Double userLat = user.getPreferredLocationLatitude();
+                Double userLon = user.getPreferredLocationLongitude();
 
-                        return eventRepository.findAll()
-                                        .stream()
-                                        .filter(event -> event.getStatus() != EventStatus.COMPLETED)
-                                        .sorted(
-                                                        Comparator
-                                                                        .comparing(
-                                                                                        Event::getInterestedUsers,
-                                                                                        Comparator.nullsLast(
-                                                                                                        Integer::compareTo))
-                                                                        .reversed()
-                                                                        .thenComparing(
-                                                                                        Event::getAverageRating,
-                                                                                        Comparator.nullsLast(
-                                                                                                        Double::compareTo))
-                                                                        .reversed())
-                                        .limit(10)
-                                        .map(this::mapToSummary)
-                                        .toList();
-                }
+                // Use optimized database query instead of in-memory filtering
+                List<Event> popularEvents = eventRepository.findPopularEvents(userLat, userLon, 10);
 
-                return eventRepository.findAll()
-                                .stream()
-                                .filter(event -> event.getStatus() != EventStatus.COMPLETED)
-                                .filter(event -> event.getVenue() != null
-                                                && event.getVenue().getLatitude() != null
-                                                && event.getVenue().getLongitude() != null)
-                                .filter(event -> {
-
-                                        double distance = calculateDistance(
-                                                        user.getPreferredLocationLatitude(),
-                                                        user.getPreferredLocationLongitude(),
-                                                        event.getVenue().getLatitude(),
-                                                        event.getVenue().getLongitude());
-
-                                        return distance <= 20;
-                                })
-                                .sorted(
-                                                Comparator
-                                                                .comparing(
-                                                                                Event::getInterestedUsers,
-                                                                                Comparator.nullsLast(
-                                                                                                Integer::compareTo))
-                                                                .reversed()
-                                                                .thenComparing(
-                                                                                Event::getAverageRating,
-                                                                                Comparator.nullsLast(
-                                                                                                Double::compareTo))
-                                                                .reversed())
-                                .limit(10)
+                return popularEvents.stream()
                                 .map(this::mapToSummary)
                                 .toList();
         }
@@ -977,27 +890,22 @@ public class EventServiceImpl implements EventService {
                 int currentPage = (page != null && page > 0) ? page : 1;
                 int pageSize = (limit != null && limit > 0) ? limit : 8;
 
-                List<EventSummaryResponse> organizerEvents = eventRepository
-                                .findByOrganizerId(organizerId)
+                // Use proper database pagination instead of in-memory pagination
+                org.springframework.data.domain.Pageable pageable =
+                        org.springframework.data.domain.PageRequest.of(currentPage - 1, pageSize);
+                org.springframework.data.domain.Page<Event> eventPage =
+                        eventRepository.findByOrganizerIdAndStatusNot(organizerId, EventStatus.COMPLETED, pageable);
+
+                List<EventSummaryResponse> paginatedEvents = eventPage.getContent()
                                 .stream()
-                                .filter(event -> event.getStatus() != EventStatus.COMPLETED)
                                 .map(this::mapToSummary)
-                                .toList();
-
-                int totalItems = organizerEvents.size();
-                int totalPages = (int) Math.ceil((double) totalItems / pageSize);
-                int startIndex = (currentPage - 1) * pageSize;
-
-                List<EventSummaryResponse> paginatedEvents = organizerEvents.stream()
-                                .skip(startIndex)
-                                .limit(pageSize)
                                 .toList();
 
                 return PaginatedResponse.<EventSummaryResponse>builder()
                                 .data(paginatedEvents)
                                 .currentPage(currentPage)
-                                .totalPages(totalPages)
-                                .totalItems(totalItems)
+                                .totalPages(eventPage.getTotalPages())
+                                .totalItems(eventPage.getTotalElements())
                                 .limit(pageSize)
                                 .build();
         }
@@ -1024,25 +932,13 @@ public class EventServiceImpl implements EventService {
                 String lowerCity = city != null ? city.toLowerCase() : null;
                 String categoriesStr = categories != null ? String.join(",", categories) : null;
                 String languagesStr = languages != null ? String.join(",", languages) : null;
-                List<Event> events = eventRepository
-                                .filterEvents(
-                                                categoriesStr,
-                                                lowerCity,
-                                                keywordPattern,
-                                                isFeatured,
-                                                recurrence,
-                                                minRating,
-                                                startDate,
-                                                endDate,
-                                                languagesStr,
-                                                ageLimit,
-                                                startTime,
-                                                endTime);
 
-                // Exclude completed events
-                events = events.stream()
-                                .filter(event -> event.getStatus() != EventStatus.COMPLETED)
-                                .toList();
+                int currentPage = page != null ? page : 1;
+                int pageSize = limit != null ? limit : 8;
+                int offset = (currentPage - 1) * pageSize;
+
+                Double userLat = null;
+                Double userLon = null;
 
                 if (Boolean.TRUE.equals(location)) {
                         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
@@ -1051,36 +947,51 @@ public class EventServiceImpl implements EventService {
                                 Optional<User> userOptional = userRepository.findByEmail(auth.getName());
                                 if (userOptional.isPresent()) {
                                         User user = userOptional.get();
-                                        if (user.getPreferredLocationLatitude() != null
-                                                        && user.getPreferredLocationLongitude() != null) {
-                                                events = events.stream()
-                                                                .filter(event -> event.getVenue() != null
-                                                                                && event.getVenue()
-                                                                                                .getLatitude() != null
-                                                                                && event.getVenue()
-                                                                                                .getLongitude() != null)
-                                                                .filter(event -> calculateDistance(
-                                                                                user.getPreferredLocationLatitude(),
-                                                                                user.getPreferredLocationLongitude(),
-                                                                                event.getVenue().getLatitude(),
-                                                                                event.getVenue().getLongitude()) <= 10)
-                                                                .toList();
-                                        }
+                                        userLat = user.getPreferredLocationLatitude();
+                                        userLon = user.getPreferredLocationLongitude();
                                 }
                         }
                 }
 
-                int totalItems = events.size();
-                int currentPage = page != null ? page : 1;
-                int pageSize = limit != null ? limit : 8;
+                // Use optimized paginated query instead of in-memory filtering
+                List<Event> events = eventRepository.filterEventsPaginated(
+                                categoriesStr,
+                                lowerCity,
+                                keywordPattern,
+                                isFeatured,
+                                recurrence,
+                                minRating,
+                                startDate,
+                                endDate,
+                                languagesStr,
+                                ageLimit,
+                                startTime,
+                                endTime,
+                                userLat,
+                                userLon,
+                                pageSize,
+                                offset);
+
+                // Get total count for pagination
+                Long totalItems = eventRepository.countFilterEvents(
+                                categoriesStr,
+                                lowerCity,
+                                keywordPattern,
+                                isFeatured,
+                                recurrence,
+                                minRating,
+                                startDate,
+                                endDate,
+                                languagesStr,
+                                ageLimit,
+                                startTime,
+                                endTime,
+                                userLat,
+                                userLon);
+
                 int totalPages = (int) Math.ceil((double) totalItems / pageSize);
 
-                int startIndex = (currentPage - 1) * pageSize;
-
-                List<EventSummaryResponse> pagedEvents = events
-                                .stream()
-                                .skip(startIndex)
-                                .limit(pageSize)
+                List<EventSummaryResponse> pagedEvents = events.stream()
                                 .map(this::mapToSummary)
                                 .toList();
 

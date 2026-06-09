@@ -17,8 +17,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.math.BigDecimal;
 
@@ -46,6 +48,103 @@ public class OrganizerDashboardController {
         String email = authentication.getName();
         return organizerRepository.findByUserEmail(email)
                 .orElseThrow(() -> new RuntimeException("Organizer not found"));
+    }
+
+    @GetMapping("/profile")
+    public ApiResponse<com.eventhub.backend.dto.OrganizerProfileResponse> getOrganizerProfile(Authentication authentication) {
+        Organizer organizer = getOrganizerFromUser(authentication);
+        com.eventhub.backend.dto.OrganizerProfileResponse response = mapToOrganizerProfileResponse(organizer);
+        return new ApiResponse<>(true, "Organizer profile fetched successfully", response);
+    }
+
+    @GetMapping("/profile/user/{userId}")
+    public ApiResponse<com.eventhub.backend.dto.OrganizerProfileResponse> getOrganizerProfileByUserId(@PathVariable Long userId) {
+        Organizer organizer = organizerRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Organizer not found"));
+        com.eventhub.backend.dto.OrganizerProfileResponse response = mapToOrganizerProfileResponse(organizer);
+        return new ApiResponse<>(true, "Organizer profile fetched successfully", response);
+    }
+
+    private com.eventhub.backend.dto.OrganizerProfileResponse mapToOrganizerProfileResponse(Organizer organizer) {
+        com.eventhub.backend.dto.OrganizerProfileResponse response = new com.eventhub.backend.dto.OrganizerProfileResponse();
+        response.setId(organizer.getId());
+        response.setOrgName(organizer.getOrgName());
+        response.setOrgEmail(organizer.getOrgEmail());
+        response.setOrgDescription(organizer.getOrgDescription());
+        response.setPhone(organizer.getPhone());
+        response.setOrganizerProfileImage(organizer.getOrganizerProfileImage());
+        response.setOrganizerBannerImage(organizer.getOrganizerBannerImage());
+        response.setOrgSpecialities(organizer.getOrgSpecialities());
+        response.setAverageRating(organizer.getAverageRating());
+        response.setTotalReviews(organizer.getTotalReviews());
+        return response;
+    }
+
+    @PutMapping("/profile")
+    public ApiResponse<com.eventhub.backend.dto.OrganizerProfileResponse> updateOrganizerProfile(
+            Authentication authentication,
+            @RequestBody Map<String, Object> updates) {
+        Organizer organizer = getOrganizerFromUser(authentication);
+
+        if (updates.containsKey("orgName")) {
+            organizer.setOrgName((String) updates.get("orgName"));
+        }
+        if (updates.containsKey("orgEmail")) {
+            organizer.setOrgEmail((String) updates.get("orgEmail"));
+        }
+        if (updates.containsKey("orgDescription")) {
+            organizer.setOrgDescription((String) updates.get("orgDescription"));
+        }
+        if (updates.containsKey("phone")) {
+            organizer.setPhone((String) updates.get("phone"));
+        }
+        if (updates.containsKey("organizerProfileImage")) {
+            organizer.setOrganizerProfileImage((String) updates.get("organizerProfileImage"));
+        }
+        if (updates.containsKey("organizerBannerImage")) {
+            organizer.setOrganizerBannerImage((String) updates.get("organizerBannerImage"));
+        }
+        if (updates.containsKey("orgSpecialities")) {
+            organizer.setOrgSpecialities(new HashSet<>((Set<String>) updates.get("orgSpecialities")));
+        }
+
+        organizerRepository.save(organizer);
+        com.eventhub.backend.dto.OrganizerProfileResponse response = mapToOrganizerProfileResponse(organizer);
+        return new ApiResponse<>(true, "Organizer profile updated successfully", response);
+    }
+
+    @PutMapping("/profile/user/{userId}")
+    public ApiResponse<com.eventhub.backend.dto.OrganizerProfileResponse> updateOrganizerProfileByUserId(
+            @PathVariable Long userId,
+            @RequestBody Map<String, Object> updates) {
+        Organizer organizer = organizerRepository.findByUserId(userId)
+                .orElseThrow(() -> new RuntimeException("Organizer not found"));
+
+        if (updates.containsKey("orgName")) {
+            organizer.setOrgName((String) updates.get("orgName"));
+        }
+        if (updates.containsKey("orgEmail")) {
+            organizer.setOrgEmail((String) updates.get("orgEmail"));
+        }
+        if (updates.containsKey("orgDescription")) {
+            organizer.setOrgDescription((String) updates.get("orgDescription"));
+        }
+        if (updates.containsKey("phone")) {
+            organizer.setPhone((String) updates.get("phone"));
+        }
+        if (updates.containsKey("organizerProfileImage")) {
+            organizer.setOrganizerProfileImage((String) updates.get("organizerProfileImage"));
+        }
+        if (updates.containsKey("organizerBannerImage")) {
+            organizer.setOrganizerBannerImage((String) updates.get("organizerBannerImage"));
+        }
+        if (updates.containsKey("orgSpecialities")) {
+            organizer.setOrgSpecialities(new HashSet<>((Set<String>) updates.get("orgSpecialities")));
+        }
+
+        organizerRepository.save(organizer);
+        com.eventhub.backend.dto.OrganizerProfileResponse response = mapToOrganizerProfileResponse(organizer);
+        return new ApiResponse<>(true, "Organizer profile updated successfully", response);
     }
 
     private long getBookingTicketCount(com.eventhub.backend.entity.Booking booking) {
@@ -132,10 +231,10 @@ public class OrganizerDashboardController {
                 .collect(Collectors.toList());
 
         List<Map<String, Object>> revenueByCategory = bookingRepository.getRevenueByCategory(organizer).stream()
-                .map(entry -> {
+                .map(dto -> {
                     Map<String, Object> rev = new HashMap<>();
-                    rev.put("_id", entry.get("category"));
-                    rev.put("revenue", entry.get("revenue"));
+                    rev.put("_id", dto.getCategory());
+                    rev.put("revenue", dto.getRevenue());
                     return rev;
                 })
                 .collect(Collectors.toList());
@@ -151,10 +250,21 @@ public class OrganizerDashboardController {
     public ApiResponse<Map<String, Object>> getTopSellingEvents(Authentication authentication) {
         try {
             Organizer organizer = getOrganizerFromUser(authentication);
-            List<Map<String, Object>> topSelling = bookingRepository.getTopSellingEvents(organizer);
+            List<com.eventhub.backend.dto.TopSellingEventDTO> topSelling = bookingRepository.getTopSellingEvents(organizer);
+
+            List<Map<String, Object>> topSellingMaps = topSelling.stream()
+                    .map(dto -> {
+                        Map<String, Object> event = new HashMap<>();
+                        event.put("eventId", dto.getEventId());
+                        event.put("title", dto.getTitle());
+                        event.put("ticketsSold", dto.getTicketsSold());
+                        event.put("revenue", dto.getRevenue());
+                        return event;
+                    })
+                    .collect(Collectors.toList());
 
             Map<String, Object> topSellingData = new HashMap<>();
-            topSellingData.put("topSelling", topSelling);
+            topSellingData.put("topSelling", topSellingMaps);
 
             return new ApiResponse<>(true, "Top selling events fetched successfully", topSellingData);
         } catch (Exception e) {
@@ -237,6 +347,23 @@ public class OrganizerDashboardController {
             // Get sessions for this event
             List<Session> sessions = sessionRepository.findByEvent(event);
 
+            // Fetch all session ticket stats in a single query to avoid N+1
+            List<com.eventhub.backend.dto.SessionTicketStatsDTO> allSessionStats = bookingRepository.getAllSessionTicketStatsByEvent(event);
+            Map<Long, Map<String, Map<String, Object>>> sessionStatsMap = new HashMap<>();
+            for (com.eventhub.backend.dto.SessionTicketStatsDTO stat : allSessionStats) {
+                Session session = stat.getSession();
+                String type = stat.getType();
+                Long sold = stat.getSold();
+                Double revenue = stat.getRevenue();
+
+                sessionStatsMap
+                    .computeIfAbsent(session.getId(), k -> new HashMap<>())
+                    .put(type, Map.of(
+                        "sold", sold,
+                        "revenue", revenue
+                    ));
+            }
+
             // Map sessions to minimal response to avoid exposing sensitive data
             List<Map<String, Object>> sessionSummaries = sessions.stream()
                     .map(session -> {
@@ -253,32 +380,39 @@ public class OrganizerDashboardController {
                         Map<String, Map<String, Object>> typeStats = new HashMap<>();
 
                         if (session.getTickets() != null && !session.getTickets().isEmpty()) {
+                            // Use pre-fetched stats instead of N+1 query
+                            Map<String, Map<String, Object>> sessionStatData = sessionStatsMap.getOrDefault(session.getId(), new HashMap<>());
+
                             ticketSummaries = session.getTickets().stream()
                                     .map(ticket -> {
                                         Map<String, Object> ticketData = new HashMap<>();
                                         ticketData.put("type", ticket.getType());
                                         ticketData.put("price", ticket.getPrice());
-                                        ticketData.put("available", ticket.getAvailable());
-                                        ticketData.put("totalSeats", ticket.getTotalSeats());
+                                        
+                                        // Calculate actual available seats by subtracting sold from total
+                                        Map<String, Object> typeStat = sessionStatData.getOrDefault(ticket.getType(), Map.of("sold", 0, "revenue", 0.0));
+                                        Object soldObj = typeStat.get("sold");
+                                        Long sold = soldObj instanceof Number ? ((Number) soldObj).longValue() : 0L;
+                                        Long totalSeats = ticket.getTotalSeats() != null ? ticket.getTotalSeats().longValue() : 0L;
+                                        Long available = totalSeats - sold;
+                                        
+                                        ticketData.put("available", available);
+                                        ticketData.put("totalSeats", totalSeats);
+                                        ticketData.put("sold", sold);
                                         return ticketData;
                                     })
                                     .collect(Collectors.toList());
 
-                            // Add stats.typeStats for frontend compatibility using actual booking data
-                            List<Map<String, Object>> sessionBookingStats = bookingRepository
-                                    .getTicketTypeStatsBySession(session);
-                            Map<String, Integer> soldByType = new HashMap<>();
-                            for (Map<String, Object> stat : sessionBookingStats) {
-                                String type = (String) stat.get("type");
-                                Long sold = ((Number) stat.get("sold")).longValue();
-                                soldByType.put(type, sold.intValue());
-                            }
-
+                            // Build type stats for the session
                             for (Session.Ticket ticket : session.getTickets()) {
                                 Map<String, Object> stats = new HashMap<>();
                                 stats.put("price", ticket.getPrice());
-                                stats.put("sold", soldByType.getOrDefault(ticket.getType(), 0));
-                                stats.put("available", ticket.getAvailable());
+                                Map<String, Object> typeStat = sessionStatData.getOrDefault(ticket.getType(), Map.of("sold", 0, "revenue", 0.0));
+                                Object soldObj = typeStat.get("sold");
+                                Long sold = soldObj instanceof Number ? ((Number) soldObj).longValue() : 0L;
+                                Long totalSeats = ticket.getTotalSeats() != null ? ticket.getTotalSeats().longValue() : 0L;
+                                stats.put("sold", sold);
+                                stats.put("available", totalSeats - sold);
                                 stats.put("desc", ticket.getType());
                                 typeStats.put(ticket.getType(), stats);
                             }
@@ -301,13 +435,13 @@ public class OrganizerDashboardController {
             Double totalRevenue = bookingRepository.getTotalRevenueByEvent(event);
 
             // Get ticket type stats from bookings
-            List<Map<String, Object>> bookingTicketStats = bookingRepository.getTicketTypeStatsByEvent(event);
+            List<com.eventhub.backend.dto.TicketTypeStatsDTO> bookingTicketStats = bookingRepository.getTicketTypeStatsByEvent(event);
             Map<String, Map<String, Object>> ticketTypeStats = new HashMap<>();
 
-            for (Map<String, Object> stat : bookingTicketStats) {
-                String type = (String) stat.get("type");
-                Long sold = ((Number) stat.get("sold")).longValue();
-                Double revenue = ((Number) stat.get("revenue")).doubleValue();
+            for (com.eventhub.backend.dto.TicketTypeStatsDTO stat : bookingTicketStats) {
+                String type = stat.getType();
+                Long sold = stat.getSold();
+                Double revenue = stat.getRevenue();
 
                 Map<String, Object> typeStat = new HashMap<>();
                 typeStat.put("sold", sold);

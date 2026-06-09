@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import image from "../assets/images/logoGold.png";
-import { auth, googleProvider } from "../config/firebaseConfig";
+// import { auth, googleProvider } from "../config/firebaseConfig";
 import { loginOAuthUser, registerUser } from "../redux/slices/authSlice";
 
 import { Eye, EyeOff } from "lucide-react"; // from lucide-react
@@ -92,6 +92,11 @@ export default function Register() {
 
   const handleGoogleLogin = async () => {
     try {
+      const { auth, googleProvider } = await import(
+
+    "../config/firebaseConfig"
+
+  );
       const result = await signInWithPopup(auth, googleProvider);
       const idToken = await result.user.getIdToken();
 

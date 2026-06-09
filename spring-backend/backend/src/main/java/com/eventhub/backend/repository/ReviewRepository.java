@@ -3,6 +3,7 @@ package com.eventhub.backend.repository;
 import com.eventhub.backend.entity.Event;
 import com.eventhub.backend.entity.Review;
 import com.eventhub.backend.entity.User;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -11,6 +12,7 @@ import java.util.Optional;
 
 public interface ReviewRepository extends JpaRepository<Review, Long> {
 
+    @EntityGraph(attributePaths = {"user"})
     List<Review> findByEvent(Event event);
 
     Optional<Review> findByUserAndEvent(

@@ -16,4 +16,7 @@ public interface OrganizerRepository
 
         @Query("SELECT o FROM Organizer o WHERE o.user.email = :email")
         Optional<Organizer> findByUserEmail(@Param("email") String email);
+
+        @Query("SELECT o FROM Organizer o WHERE o.user.id = :userId")
+        Optional<Organizer> findByUserId(@Param("userId") Long userId);
 }

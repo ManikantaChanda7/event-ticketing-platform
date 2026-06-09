@@ -66,24 +66,17 @@ public class AuthController {
         public ApiResponse<LoginResponse> login(
                         @Valid @RequestBody LoginRequest request) {
 
-                String accessToken = userService.loginUser(
+                // Use optimized single query method instead of 4 separate queries
+                com.eventhub.backend.dto.LoginDataResponse loginData = userService.getLoginData(
                                 request.getEmail(),
                                 request.getPassword());
-                String refreshToken = userService.generateRefreshToken(
-                                request.getEmail());
-
-                // Fetch user to populate response fields
-                ProfileResponse profile = userService.getProfile(request.getEmail());
-
-                // Fetch user's interested events
-                List<Long> userInterests = userService.getUserInterestedEventIds(request.getEmail());
 
                 LoginResponse response = new LoginResponse(
-                                accessToken,
-                                refreshToken,
-                                profile.getId(),
-                                profile.getRole(),
-                                userInterests);
+                                loginData.getAccessToken(),
+                                loginData.getRefreshToken(),
+                                loginData.getProfile().getId(),
+                                loginData.getProfile().getRole(),
+                                loginData.getUserInterests());
                 return new ApiResponse<>(true, "Login successful", response);
         }
 
@@ -93,8 +86,9 @@ public class AuthController {
 
                 String refreshToken = request.get("refreshToken");
 
-                String email = userService.refreshAccessToken(refreshToken);
-                String newAccessToken = jwtService.generateToken(email);
+                String newAccessToken = userService.refreshAccessToken(refreshToken);
+
+                String email = jwtService.extractUsername(refreshToken);
                 String newRefreshToken = jwtService.generateRefreshToken(email);
 
                 return new ApiResponse<>(
@@ -126,17 +120,15 @@ public class AuthController {
 
                 // Try to login, if user doesn't exist, register them first
                 try {
-                        String accessToken = userService.loginUser(email, "oauth-user-no-password-123");
-                        String refreshToken = userService.generateRefreshToken(email);
-                        ProfileResponse profile = userService.getProfile(email);
-                        List<Long> userInterests = userService.getUserInterestedEventIds(email);
+                        // Use optimized single query method instead of 4 separate queries
+                        com.eventhub.backend.dto.LoginDataResponse loginData = userService.getLoginData(email, "oauth-user-no-password-123");
                         
                         LoginResponse response = new LoginResponse(
-                                        accessToken,
-                                        refreshToken,
-                                        profile.getId(),
-                                        profile.getRole(),
-                                        userInterests);
+                                        loginData.getAccessToken(),
+                                        loginData.getRefreshToken(),
+                                        loginData.getProfile().getId(),
+                                        loginData.getProfile().getRole(),
+                                        loginData.getUserInterests());
                         return new ApiResponse<>(true, "OAuth login successful", response);
                 } catch (Exception e) {
                         // If login fails, register the OAuth user
@@ -154,17 +146,15 @@ public class AuthController {
                         }
                         userRepository.save(user);
                         
-                        String accessToken = userService.loginUser(email, "oauth-user-no-password-123");
-                        String refreshToken = userService.generateRefreshToken(email);
-                        ProfileResponse profile = userService.getProfile(email);
-                        List<Long> userInterests = userService.getUserInterestedEventIds(email);
+                        // Use optimized single query method instead of 4 separate queries
+                        com.eventhub.backend.dto.LoginDataResponse loginData = userService.getLoginData(email, "oauth-user-no-password-123");
                         
                         LoginResponse response = new LoginResponse(
-                                        accessToken,
-                                        refreshToken,
-                                        profile.getId(),
-                                        profile.getRole(),
-                                        userInterests);
+                                        loginData.getAccessToken(),
+                                        loginData.getRefreshToken(),
+                                        loginData.getProfile().getId(),
+                                        loginData.getProfile().getRole(),
+                                        loginData.getUserInterests());
                         return new ApiResponse<>(true, "OAuth login successful", response);
                 }
         }

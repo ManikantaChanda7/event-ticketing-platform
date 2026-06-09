@@ -22,6 +22,8 @@ public interface EventService {
 
         EventResponse updateEvent(Long id, EventRequest request);
 
+        EventResponse updateEventImage(Long id, java.util.Map<String, String> request);
+
         void deleteEvent(Long id);
 
         List<EventSummaryResponse> getAllEvents();

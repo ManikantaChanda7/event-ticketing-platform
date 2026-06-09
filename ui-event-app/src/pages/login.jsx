@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Link, useNavigate } from "react-router-dom";
 import image from "../assets/images/logoGold.png";
-import { auth, googleProvider } from "../config/firebaseConfig";
+// import { auth, googleProvider } from "../config/firebaseConfig";
 import { loginOAuthUser, loginUser } from "../redux/slices/authSlice";
 import { toastRef } from "../components/toastProvider";
 
@@ -68,6 +68,11 @@ export default function Login() {
 
   const handleGoogleLogin = async () => {
     try {
+      const { auth, googleProvider } = await import(
+
+    "../config/firebaseConfig"
+
+  );
       toastRef.current?.loading("Signing in with Google...");
 
       const result = await signInWithPopup(auth, googleProvider);

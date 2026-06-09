@@ -1,19 +1,24 @@
 package com.eventhub.backend.security;
 
 import com.eventhub.backend.service.CustomUserDetailsService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.io.IOException;
 import java.util.Arrays;
 
 @Configuration
@@ -55,6 +60,8 @@ public class SecurityConfig {
                                                 .permitAll()
                                                 .anyRequest()
                                                 .authenticated())
+                                .exceptionHandling(exception -> exception
+                                                .authenticationEntryPoint(new CustomAuthenticationEntryPoint()))
                                 .userDetailsService(userDetailsService)
                                 .addFilterBefore(
                                                 jwtAuthenticationFilter,
@@ -93,5 +100,17 @@ public class SecurityConfig {
                         throws Exception {
 
                 return config.getAuthenticationManager();
+        }
+
+        private static class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint {
+                @Override
+                public void commence(
+                                HttpServletRequest request,
+                                HttpServletResponse response,
+                                AuthenticationException authException) throws IOException {
+                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                        response.setContentType("application/json");
+                        response.getWriter().write("{\"error\":\"Unauthorized\"}");
+                }
         }
 }

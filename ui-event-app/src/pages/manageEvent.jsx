@@ -12,6 +12,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import Chart from "react-apexcharts";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import { updateEventImage, updateEventTitle } from "../redux/slices/eventSlice";
 import { getManageEventData } from "../redux/slices/organizerProfileSlice";
 import { deleteSession, updateSession } from "../redux/slices/sessionSlice";
@@ -20,9 +21,18 @@ import { useLocation, useParams } from "react-router-dom";
 
 export default function ManageEvent() {
   const dispatch = useDispatch();
+  const navigate = useNavigate();
   const location = useLocation();
   // const selectedEventId = location.state;
   const { id: selectedEventId } = useParams();
+
+  // Redirect to dashboard if event ID is missing
+  useEffect(() => {
+    if (!selectedEventId) {
+      console.error("Event ID is missing from URL, redirecting to dashboard");
+      navigate("/dashboard");
+    }
+  }, [selectedEventId, navigate]);
 
   const { manageEventData } = useSelector((state) => state.organizerProfile);
   const { updatedSession } = useSelector((state) => state.session);
@@ -90,6 +100,10 @@ export default function ManageEvent() {
   };
 
   useEffect(() => {
+    if (!selectedEventId) {
+      console.error("Event ID is missing from URL");
+      return;
+    }
     dispatch(getManageEventData(selectedEventId)).unwrap();
   }, [selectedEventId]);
 
@@ -353,9 +367,19 @@ export default function ManageEvent() {
 
       const apiType = type === "hero" ? "banner" : "thumbnail";
 
+      // Get event ID from URL parameter or from manageEventData
+      const eventId = selectedEventId || manageEventData?.event?.id;
+
+      if (!eventId) {
+        console.error("Event ID is undefined, cannot update image");
+        alert("Event ID is missing. Please navigate to this page from the dashboard.");
+        setUploading(false);
+        return;
+      }
+
       dispatch(
         updateEventImage({
-          selectedEventId,
+          eventId: eventId,
           type: apiType,
           url: imageUrl,
         })

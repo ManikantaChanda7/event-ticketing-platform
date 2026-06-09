@@ -30,6 +30,7 @@ public class JwtService {
 
         return Jwts.builder()
                 .subject(email)
+                .claim("type", "access")
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + jwtExpiration))
                 .signWith(getSigningKey())
@@ -40,6 +41,7 @@ public class JwtService {
 
         return Jwts.builder()
                 .subject(email)
+                .claim("type", "refresh")
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + refreshExpiration))
                 .signWith(getSigningKey())
@@ -64,6 +66,17 @@ public class JwtService {
                 .parseSignedClaims(token)
                 .getPayload()
                 .getExpiration();
+    }
+
+    public String extractTokenType(String token) {
+        String type = Jwts.parser()
+                .verifyWith(getSigningKey())
+                .build()
+                .parseSignedClaims(token)
+                .getPayload()
+                .get("type", String.class);
+        // For backward compatibility with old tokens without type claim
+        return type != null ? type : "access";
     }
 
     private boolean isTokenExpired(String token) {

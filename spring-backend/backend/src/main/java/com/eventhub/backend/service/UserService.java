@@ -1,6 +1,7 @@
 package com.eventhub.backend.service;
 
 import com.eventhub.backend.dto.ChangePasswordRequest;
+import com.eventhub.backend.dto.LoginDataResponse;
 import com.eventhub.backend.dto.ProfileResponse;
 import com.eventhub.backend.dto.RegisterRequest;
 import com.eventhub.backend.dto.UpdateEmailRequest;
@@ -45,4 +46,6 @@ public interface UserService {
         List<Long> getUserInterestedEventIds(String userEmail);
 
         ProfileResponse updateInterests(Long userId);
+
+        LoginDataResponse getLoginData(String email, String password);
 }

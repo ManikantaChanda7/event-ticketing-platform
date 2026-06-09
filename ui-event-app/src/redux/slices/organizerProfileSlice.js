@@ -24,7 +24,7 @@ export const updateOrganizerProfile = createAsyncThunk(
   "organizer/updateProfile",
   async (formData, { rejectWithValue }) => {
     try {
-      const res = await api.put(`/organizer/update`, formData);
+      const res = await api.put(`/organizer/profile`, formData);
       return res.data.data;
     } catch (err) {
       return rejectWithValue(err.response?.data || "Update failed");

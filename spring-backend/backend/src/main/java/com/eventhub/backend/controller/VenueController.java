@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/venues")
@@ -86,53 +87,17 @@ class VenueLegacyController {
             @RequestParam(name = "startDate", required = true) String startDateStr,
             @RequestParam(name = "endDate", required = false) String endDateStr,
             @RequestParam(name = "search", required = false, defaultValue = "") String searchTerm) {
-        
-        // Ensure searchTerm is never null
-        if (searchTerm == null) {
-            searchTerm = "";
-        }
-        
+
         LocalDate startDate = LocalDate.parse(startDateStr);
         LocalDate endDate = endDateStr != null ? LocalDate.parse(endDateStr) : startDate;
 
-        List<Venue> allVenues = venueRepository.findAll();
-        
-        Set<Long> occupiedVenueIds = new HashSet<>();
-        List<Event> overlappingEvents = eventRepository.findAll();
-        for (Event event : overlappingEvents) {
-            LocalDate eventStart = event.getStartDate();
-            LocalDate eventEnd = event.getEndDate() != null ? event.getEndDate() : eventStart;
-            
-            if (!eventStart.isAfter(endDate) && !eventEnd.isBefore(startDate)) {
-                if (event.getVenue() != null) {
-                    occupiedVenueIds.add(event.getVenue().getId());
-                }
-            }
-        }
-        
-        List<VenueResponse> availableVenues = new ArrayList<>();
-        Set<Long> addedVenueIds = new HashSet<>();
-        String lowerSearchTerm = searchTerm.toLowerCase().trim();
-        
-        for (Venue venue : allVenues) {
-            // Skip if already added or occupied
-            if (addedVenueIds.contains(venue.getId()) || occupiedVenueIds.contains(venue.getId())) {
-                continue;
-            }
-            
-            // Apply search filter if search term is not empty and not "*"
-            boolean matchesSearch = true;
-            if (!lowerSearchTerm.isEmpty() && !"*".equals(lowerSearchTerm)) {
-                String venueLabel = (venue.getName() + (venue.getCity() != null ? " " + venue.getCity() : "")).toLowerCase();
-                matchesSearch = venueLabel.contains(lowerSearchTerm);
-            }
-            
-            if (matchesSearch) {
-                availableVenues.add(venueService.mapToResponse(venue));
-                addedVenueIds.add(venue.getId());
-            }
-        }
-        
+        // Use optimized single query instead of fetching all venues and events
+        List<Venue> availableVenues = venueRepository.findAvailableVenues(startDate, endDate, searchTerm);
+
+        List<VenueResponse> venueResponses = availableVenues.stream()
+                .map(venueService::mapToResponse)
+                .collect(Collectors.toList());
+
         String message;
         if (startDate.equals(endDate)) {
             message = searchTerm != null && !searchTerm.isEmpty()
@@ -143,8 +108,8 @@ class VenueLegacyController {
                     ? "Available venues for " + startDate + " to " + endDate + " matching '" + searchTerm + "'"
                     : "Available venues for " + startDate + " to " + endDate;
         }
-                
-        return new ApiResponse<>(true, message, availableVenues);
+
+        return new ApiResponse<>(true, message, venueResponses);
     }
 
     @GetMapping("/{id}")

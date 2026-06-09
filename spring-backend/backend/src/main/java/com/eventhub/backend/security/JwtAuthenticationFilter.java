@@ -52,7 +52,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 try {
                         email = jwtService.extractUsername(jwt);
                 } catch (Exception ex) {
-                        filterChain.doFilter(request, response);
+                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                        response.setContentType("application/json");
+                        response.getWriter().write("{\"error\":\"Invalid or expired token\"}");
                         return;
                 }
 
@@ -67,6 +69,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                         jwt,
                                         userDetails.getUsername())) {
 
+                                // Validate that the token is an access token, not a refresh token
+                                String tokenType = jwtService.extractTokenType(jwt);
+                                if (!"access".equals(tokenType)) {
+                                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                                        response.setContentType("application/json");
+                                        response.getWriter().write("{\"error\":\"Invalid token type - expected access token\"}");
+                                        return;
+                                }
+
                                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                                                 userDetails,
                                                 null,
@@ -79,6 +90,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                 SecurityContextHolder
                                                 .getContext()
                                                 .setAuthentication(authToken);
+                        } else {
+                                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                                response.setContentType("application/json");
+                                response.getWriter().write("{\"error\":\"Invalid or expired token\"}");
+                                return;
                         }
                 }
 

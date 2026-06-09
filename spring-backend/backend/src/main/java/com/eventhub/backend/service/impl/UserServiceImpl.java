@@ -2,6 +2,7 @@ package com.eventhub.backend.service.impl;
 
 import com.eventhub.backend.dto.ChangePasswordRequest;
 import com.eventhub.backend.dto.LocationResponse;
+import com.eventhub.backend.dto.LoginDataResponse;
 import com.eventhub.backend.dto.ProfileResponse;
 import com.eventhub.backend.dto.RegisterRequest;
 import com.eventhub.backend.dto.UpdateEmailRequest;
@@ -92,6 +93,13 @@ public class UserServiceImpl implements UserService {
                         throw new RuntimeException("Invalid refresh token");
                 }
 
+                // Validate that the token is actually a refresh token
+                // For backward compatibility, allow old tokens without type claim
+                String tokenType = jwtService.extractTokenType(refreshToken);
+                if (tokenType != null && !"refresh".equals(tokenType)) {
+                        throw new RuntimeException("Invalid token type - expected refresh token");
+                }
+
                 return jwtService.generateToken(user.getEmail());
         }
 
@@ -158,6 +166,12 @@ public class UserServiceImpl implements UserService {
         private ProfileResponse mapToProfileResponse(
 
                         User user) {
+                return mapToProfileResponse(user, null);
+        }
+
+        private ProfileResponse mapToProfileResponse(
+                        User user,
+                        List<Long> preloadedInterestedEventIds) {
 
                 ProfileResponse response =
 
@@ -200,8 +214,11 @@ public class UserServiceImpl implements UserService {
                         response.setPreferredLocation(location);
                 }
 
-                // Map interested events
-                List<Long> interestedEventIds = getUserInterestedEventIds(user.getEmail());
+                // Map interested events - use pre-loaded if available, otherwise fetch
+                List<Long> interestedEventIds = preloadedInterestedEventIds;
+                if (interestedEventIds == null) {
+                        interestedEventIds = getUserInterestedEventIds(user.getEmail());
+                }
                 response.setInterestedEvents(interestedEventIds);
 
                 return response;
@@ -347,5 +364,32 @@ public class UserServiceImpl implements UserService {
                                 .orElseThrow(() -> new ResourceNotFoundException(
                                                 "User not found"));
                 return mapToProfileResponse(user);
+        }
+
+        @Override
+        public LoginDataResponse getLoginData(String email, String password) {
+                // Fetch user with interested events in a single query
+                User user = userRepository.findUserWithInterestsForLogin(email)
+                                .orElseThrow(() -> new RuntimeException("Invalid credentials"));
+
+                // Validate password
+                if (!passwordEncoder.matches(password, user.getPassword())) {
+                        throw new RuntimeException("Invalid credentials");
+                }
+
+                // Generate tokens
+                String accessToken = jwtService.generateToken(user.getEmail());
+                String refreshToken = jwtService.generateRefreshToken(user.getEmail());
+
+                // Extract interested event IDs from the already-loaded collection
+                List<Long> userInterests = user.getInterestedEvents()
+                                .stream()
+                                .map(event -> event.getId())
+                                .toList();
+
+                // Map to profile response using pre-loaded interested events to avoid redundant query
+                ProfileResponse profile = mapToProfileResponse(user, userInterests);
+
+                return new LoginDataResponse(accessToken, refreshToken, profile, userInterests);
         }
 }

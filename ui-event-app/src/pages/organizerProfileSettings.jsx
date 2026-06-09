@@ -322,6 +322,11 @@ export default function ProfileSettings() {
             ...prev,
             organizerBannerImage: res.url,
           }));
+          // Save to database
+          await dispatch(updateOrganizerProfile({
+            ...formData,
+            organizerBannerImage: res.url,
+          })).unwrap();
         }
 
         if (type === "profile") {
@@ -329,6 +334,11 @@ export default function ProfileSettings() {
             ...prev,
             organizerProfileImage: res.url,
           }));
+          // Save to database
+          await dispatch(updateOrganizerProfile({
+            ...formData,
+            organizerProfileImage: res.url,
+          })).unwrap();
         }
 
         setFileNames((prev) => ({ ...prev, [type]: file.name }));

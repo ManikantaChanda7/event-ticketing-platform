@@ -63,6 +63,14 @@ public class EventController {
                 return new ApiResponse<>(true, "Event updated successfully", response);
         }
 
+        @PutMapping("/{id}/updateEventImage")
+        public ApiResponse<EventResponse> updateEventImage(
+                        @PathVariable Long id,
+                        @RequestBody Map<String, String> request) {
+                EventResponse response = eventService.updateEventImage(id, request);
+                return new ApiResponse<>(true, "Event image updated successfully", response);
+        }
+
         @DeleteMapping("/{id}")
         public ApiResponse<Void> deleteEvent(
                         @PathVariable Long id) {

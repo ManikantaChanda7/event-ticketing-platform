@@ -230,10 +230,14 @@ export const updateEventImage = createAsyncThunk(
   "event/updateEventImage",
   async ({ eventId, type, url }, { rejectWithValue }) => {
     try {
-      await api.put(`events/${eventId}/updateEventImage`, {
-        type, // "banner" or "thumbnail"
-        url,
-      });
+      const requestBody = {};
+      if (type === "banner") {
+        requestBody.bannerImage = url;
+      } else if (type === "thumbnail") {
+        requestBody.thumbnailImage = url;
+      }
+
+      await api.put(`events/${eventId}/updateEventImage`, requestBody);
 
       return { eventId, type, url }; // return updated details
     } catch (err) {
