@@ -15,12 +15,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
 @Service
 public class EventGenerationService {
-    private static final long MIN_ACTIVE_EVENTS = 500;
+    private static final long MIN_ACTIVE_EVENTS = 1000;
 
     private final EventRepository eventRepository;
     private final OrganizerRepository organizerRepository;
