@@ -15,6 +15,9 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     @EntityGraph(attributePaths = {"user"})
     List<Review> findByEvent(Event event);
 
+    @EntityGraph(attributePaths = {"event"})
+    List<Review> findAll();
+
     Optional<Review> findByUserAndEvent(
             User user,
             Event event);

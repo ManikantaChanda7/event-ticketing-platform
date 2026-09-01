@@ -117,14 +117,16 @@ public class EventServiceImpl implements EventService {
                 // Parse dates
                 if (request.getStartDate() != null) {
                         if (request.getStartDate().contains("T")) {
-                                event.setStartDate(java.time.Instant.parse(request.getStartDate()).atZone(java.time.ZoneId.systemDefault()).toLocalDate());
+                                event.setStartDate(java.time.Instant.parse(request.getStartDate())
+                                                .atZone(java.time.ZoneId.systemDefault()).toLocalDate());
                         } else {
                                 event.setStartDate(java.time.LocalDate.parse(request.getStartDate()));
                         }
                 }
                 if (request.getEndDate() != null) {
                         if (request.getEndDate().contains("T")) {
-                                event.setEndDate(java.time.Instant.parse(request.getEndDate()).atZone(java.time.ZoneId.systemDefault()).toLocalDate());
+                                event.setEndDate(java.time.Instant.parse(request.getEndDate())
+                                                .atZone(java.time.ZoneId.systemDefault()).toLocalDate());
                         } else {
                                 event.setEndDate(java.time.LocalDate.parse(request.getEndDate()));
                         }
@@ -135,7 +137,8 @@ public class EventServiceImpl implements EventService {
                 // Set location
                 if (request.getLocation() != null) {
                         event.setLocationType(request.getLocation().getType());
-                        if (request.getLocation().getCoordinates() != null && request.getLocation().getCoordinates().size() >= 2) {
+                        if (request.getLocation().getCoordinates() != null
+                                        && request.getLocation().getCoordinates().size() >= 2) {
                                 event.setLocationLongitude(request.getLocation().getCoordinates().get(0));
                                 event.setLocationLatitude(request.getLocation().getCoordinates().get(1));
                         }
@@ -171,7 +174,8 @@ public class EventServiceImpl implements EventService {
                 java.time.LocalDate startDate = event.getStartDate();
                 java.time.LocalDate endDate = event.getEndDate() != null ? event.getEndDate() : startDate;
                 String recurrence = request.getRecurrence() != null ? request.getRecurrence() : "single";
-                Set<String> selectedWeekdays = request.getSelectedWeekdays() != null ? request.getSelectedWeekdays() : new java.util.HashSet<>();
+                Set<String> selectedWeekdays = request.getSelectedWeekdays() != null ? request.getSelectedWeekdays()
+                                : new java.util.HashSet<>();
 
                 // Generate dates based on recurrence
                 List<java.time.LocalDate> dates = new java.util.ArrayList<>();
@@ -188,9 +192,10 @@ public class EventServiceImpl implements EventService {
                                 java.time.DayOfWeek dayOfWeek = current.getDayOfWeek();
                                 String dayStr = dayOfWeek.toString().substring(0, 3).toUpperCase(); // MON, TUE, etc.
                                 // Also check for lowercase or other formats
-                                if (selectedWeekdays.contains(dayStr) || 
-                                    selectedWeekdays.contains(dayStr.toLowerCase()) ||
-                                    selectedWeekdays.contains(dayStr.substring(0, 1).toUpperCase() + dayStr.substring(1).toLowerCase())) {
+                                if (selectedWeekdays.contains(dayStr) ||
+                                                selectedWeekdays.contains(dayStr.toLowerCase()) ||
+                                                selectedWeekdays.contains(dayStr.substring(0, 1).toUpperCase()
+                                                                + dayStr.substring(1).toLowerCase())) {
                                         shouldAdd = true;
                                 }
                         }
@@ -211,7 +216,8 @@ public class EventServiceImpl implements EventService {
                 // Calculate release date
                 java.time.LocalDateTime creationDate = java.time.LocalDateTime.now();
                 java.time.LocalDateTime idealFirstRelease = startDate.atStartOfDay().minusDays(20);
-                java.time.LocalDateTime releaseDateBase = idealFirstRelease.isAfter(creationDate) ? idealFirstRelease : creationDate;
+                java.time.LocalDateTime releaseDateBase = idealFirstRelease.isAfter(creationDate) ? idealFirstRelease
+                                : creationDate;
 
                 // Create sessions for each date
                 for (int i = 0; i < dates.size(); i++) {
@@ -232,11 +238,15 @@ public class EventServiceImpl implements EventService {
                         if (request.getTickets() != null) {
                                 for (TicketRequest ticketReq : request.getTickets()) {
                                         Session.Ticket ticket = new Session.Ticket();
-                                        String type = ticketReq.getType() != null ? ticketReq.getType() : ticketReq.getSection();
+                                        String type = ticketReq.getType() != null ? ticketReq.getType()
+                                                        : ticketReq.getSection();
                                         ticket.setType(type);
                                         ticket.setPrice(ticketReq.getPrice());
-                                        Integer available = ticketReq.getAvailable() != null ? ticketReq.getAvailable() : ticketReq.getCapacity();
-                                        Integer totalSeats = ticketReq.getTotalSeats() != null ? ticketReq.getTotalSeats() : ticketReq.getCapacity();
+                                        Integer available = ticketReq.getAvailable() != null ? ticketReq.getAvailable()
+                                                        : ticketReq.getCapacity();
+                                        Integer totalSeats = ticketReq.getTotalSeats() != null
+                                                        ? ticketReq.getTotalSeats()
+                                                        : ticketReq.getCapacity();
                                         ticket.setAvailable(available);
                                         ticket.setTotalSeats(totalSeats);
                                         tickets.add(ticket);
@@ -276,11 +286,13 @@ public class EventServiceImpl implements EventService {
                 try {
                         // Parse JSON seating layout
                         com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
-                        List<java.util.Map<String, Object>> layout = objectMapper.readValue(seatingLayoutJson, List.class);
+                        List<java.util.Map<String, Object>> layout = objectMapper.readValue(seatingLayoutJson,
+                                        List.class);
 
                         for (java.util.Map<String, Object> section : layout) {
                                 String sectionName = (String) section.get("section");
-                                List<java.util.Map<String, Object>> rows = (List<java.util.Map<String, Object>>) section.get("rows");
+                                List<java.util.Map<String, Object>> rows = (List<java.util.Map<String, Object>>) section
+                                                .get("rows");
 
                                 if (rows != null && !rows.isEmpty()) {
                                         for (java.util.Map<String, Object> row : rows) {
@@ -294,7 +306,8 @@ public class EventServiceImpl implements EventService {
                                                         }
                                                 } else {
                                                         // Fallback: generate seats evenly
-                                                        Integer sectionCapacity = (Integer) section.get("sectionCapacity");
+                                                        Integer sectionCapacity = (Integer) section
+                                                                        .get("sectionCapacity");
                                                         String rowLabel = (String) row.get("label");
                                                         if (sectionCapacity != null && rowLabel != null) {
                                                                 int seatsPerRow = sectionCapacity / rows.size();
@@ -357,16 +370,15 @@ public class EventServiceImpl implements EventService {
         public List<String> getCategories() {
                 // Predefined categories matching Node.js
                 return List.of(
-                        "Music",
-                        "Sports",
-                        "Workshops",
-                        "Conferences",
-                        "Festivals",
-                        "Tech & Innovation",
-                        "Charity",
-                        "Comedy",
-                        "Exhibitions"
-                );
+                                "Music",
+                                "Sports",
+                                "Workshops",
+                                "Conferences",
+                                "Festivals",
+                                "Tech & Innovation",
+                                "Charity",
+                                "Comedy",
+                                "Exhibitions");
         }
 
         @Override
@@ -505,8 +517,8 @@ public class EventServiceImpl implements EventService {
                 int pageSize = limit != null ? limit : 8;
 
                 // Use proper database pagination instead of in-memory pagination
-                org.springframework.data.domain.Pageable pageable =
-                        org.springframework.data.domain.PageRequest.of(currentPage - 1, pageSize);
+                org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest
+                                .of(currentPage - 1, pageSize);
 
                 EventStatus statusFilter = null;
                 if (status != null && !status.isEmpty()) {
@@ -517,8 +529,8 @@ public class EventServiceImpl implements EventService {
                         }
                 }
 
-                org.springframework.data.domain.Page<Event> eventPage =
-                        userRepository.findInterestedEventsByEmail(email, statusFilter, pageable);
+                org.springframework.data.domain.Page<Event> eventPage = userRepository
+                                .findInterestedEventsByEmail(email, statusFilter, pageable);
 
                 List<EventSummaryResponse> data = eventPage.getContent()
                                 .stream()
@@ -635,33 +647,35 @@ public class EventServiceImpl implements EventService {
                 event.setVenue(venue);
                 event.setAgeLimit(request.getAgeLimit());
                 if (request.getLanguages() != null) {
-                    event.setLanguages(request.getLanguages());
+                        event.setLanguages(request.getLanguages());
                 }
                 if (request.getSelectedWeekdays() != null) {
-                    event.setSelectedWeekdays(request.getSelectedWeekdays());
+                        event.setSelectedWeekdays(request.getSelectedWeekdays());
                 }
                 if (request.getStartDate() != null) {
-                    if (request.getStartDate().contains("T")) {
-                        event.setStartDate(java.time.Instant.parse(request.getStartDate()).atZone(java.time.ZoneId.systemDefault()).toLocalDate());
-                    } else {
-                        event.setStartDate(java.time.LocalDate.parse(request.getStartDate()));
-                    }
+                        if (request.getStartDate().contains("T")) {
+                                event.setStartDate(java.time.Instant.parse(request.getStartDate())
+                                                .atZone(java.time.ZoneId.systemDefault()).toLocalDate());
+                        } else {
+                                event.setStartDate(java.time.LocalDate.parse(request.getStartDate()));
+                        }
                 }
                 if (request.getEndDate() != null) {
-                    if (request.getEndDate().contains("T")) {
-                        event.setEndDate(java.time.Instant.parse(request.getEndDate()).atZone(java.time.ZoneId.systemDefault()).toLocalDate());
-                    } else {
-                        event.setEndDate(java.time.LocalDate.parse(request.getEndDate()));
-                    }
+                        if (request.getEndDate().contains("T")) {
+                                event.setEndDate(java.time.Instant.parse(request.getEndDate())
+                                                .atZone(java.time.ZoneId.systemDefault()).toLocalDate());
+                        } else {
+                                event.setEndDate(java.time.LocalDate.parse(request.getEndDate()));
+                        }
                 }
                 if (request.getStartTime() != null) {
-                    event.setStartTime(request.getStartTime());
+                        event.setStartTime(request.getStartTime());
                 }
                 if (request.getEndTime() != null) {
-                    event.setEndTime(request.getEndTime());
+                        event.setEndTime(request.getEndTime());
                 }
                 if (request.getRecurrence() != null) {
-                    event.setRecurrence(request.getRecurrence());
+                        event.setRecurrence(request.getRecurrence());
                 }
 
                 if (request.getStatus() != null
@@ -735,6 +749,9 @@ public class EventServiceImpl implements EventService {
                                         "You are not allowed to delete this event");
                 }
 
+                // Delete associated sessions first
+                sessionRepository.deleteAll(sessionRepository.findByEvent(event));
+
                 eventRepository.delete(event);
         }
 
@@ -798,12 +815,13 @@ public class EventServiceImpl implements EventService {
         @Override
         public List<EventSummaryResponse> getTrendingEvents() {
 
-                // Use optimized single query instead of N+1 pattern
-                List<com.eventhub.backend.dto.EventStatsDTO> eventStats = eventRepository.findTrendingEventsWithStats(EventStatus.COMPLETED);
+                // Use optimized query with database-level LIMIT
+                org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest.of(0,
+                                10);
+                List<Event> events = eventRepository.findTrendingEventsNative(EventStatus.COMPLETED, pageable);
 
-                return eventStats.stream()
-                                .limit(10)
-                                .map(stat -> mapToSummary(stat.getEvent()))
+                return events.stream()
+                                .map(this::mapToSummary)
                                 .toList();
         }
 
@@ -891,10 +909,10 @@ public class EventServiceImpl implements EventService {
                 int pageSize = (limit != null && limit > 0) ? limit : 8;
 
                 // Use proper database pagination instead of in-memory pagination
-                org.springframework.data.domain.Pageable pageable =
-                        org.springframework.data.domain.PageRequest.of(currentPage - 1, pageSize);
-                org.springframework.data.domain.Page<Event> eventPage =
-                        eventRepository.findByOrganizerIdAndStatusNot(organizerId, EventStatus.COMPLETED, pageable);
+                org.springframework.data.domain.Pageable pageable = org.springframework.data.domain.PageRequest
+                                .of(currentPage - 1, pageSize);
+                org.springframework.data.domain.Page<Event> eventPage = eventRepository
+                                .findByOrganizerIdAndStatusNot(organizerId, EventStatus.COMPLETED, pageable);
 
                 List<EventSummaryResponse> paginatedEvents = eventPage.getContent()
                                 .stream()
@@ -1060,8 +1078,11 @@ public class EventServiceImpl implements EventService {
                                                 event.getThumbnailImage())
                                 // Set fields we were missing!
                                 .ageLimit(event.getAgeLimit())
-                                .languages(event.getLanguages() != null ? new ArrayList<>(event.getLanguages()) : new ArrayList<>())
-                                .selectedWeekdays(event.getSelectedWeekdays() != null ? new ArrayList<>(event.getSelectedWeekdays()) : new ArrayList<>())
+                                .languages(event.getLanguages() != null ? new ArrayList<>(event.getLanguages())
+                                                : new ArrayList<>())
+                                .selectedWeekdays(event.getSelectedWeekdays() != null
+                                                ? new ArrayList<>(event.getSelectedWeekdays())
+                                                : new ArrayList<>())
                                 .isFeatured(event.getIsFeatured())
                                 .createdAt(event.getCreatedAt())
                                 .updatedAt(event.getUpdatedAt())

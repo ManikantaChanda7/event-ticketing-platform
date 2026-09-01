@@ -7,6 +7,7 @@ import image from "../assets/images/logoGold.png";
 // import { auth, googleProvider } from "../config/firebaseConfig";
 import { loginOAuthUser, loginUser } from "../redux/slices/authSlice";
 import { toastRef } from "../components/toastProvider";
+import { initializeTokenRefresh } from "../utils/tokenRefresh";
 
 export default function Login() {
   const dispatch = useDispatch();
@@ -59,6 +60,9 @@ export default function Login() {
 
   useEffect(() => {
     if (isAuthenticated) {
+      // ✅ Initialize proactive token refresh on successful login
+      initializeTokenRefresh();
+
       const role = localStorage.getItem("role");
       navigate(
         role === "organizer" || role === "ORGANIZER" ? "/dashboard" : "/home",
@@ -68,11 +72,7 @@ export default function Login() {
 
   const handleGoogleLogin = async () => {
     try {
-      const { auth, googleProvider } = await import(
-
-    "../config/firebaseConfig"
-
-  );
+      const { auth, googleProvider } = await import("../config/firebaseConfig");
       toastRef.current?.loading("Signing in with Google...");
 
       const result = await signInWithPopup(auth, googleProvider);

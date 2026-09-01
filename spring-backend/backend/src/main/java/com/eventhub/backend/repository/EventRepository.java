@@ -34,6 +34,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             """)
     List<String> findDistinctCategories();
 
+    @EntityGraph(attributePaths = {"venue", "organizer"})
     @Query("""
             SELECT DISTINCT e
             FROM Event e
@@ -53,6 +54,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             @Param("organizerIds") List<Long> organizerIds,
             @Param("excludedIds") List<Long> excludedIds);
 
+    @EntityGraph(attributePaths = {"venue", "organizer"})
     @Query("""
             SELECT e
             FROM Event e
@@ -186,19 +188,13 @@ public interface EventRepository extends JpaRepository<Event, Long> {
             @Param("userLat") Double userLat,
             @Param("userLon") Double userLon);
 
+    @EntityGraph(attributePaths = {"venue", "organizer"})
     @Query("""
-            SELECT new com.eventhub.backend.dto.EventStatsDTO(
-                e,
-                COALESCE(COUNT(bs), 0)
-            )
-            FROM Event e
-            LEFT JOIN Booking b ON b.event = e
-            LEFT JOIN b.seats bs
+            SELECT e FROM Event e
             WHERE e.status != :completedStatus
-            GROUP BY e
-            ORDER BY (COALESCE(e.averageRating, 0.0) * 10 + COALESCE(e.interestedUsers, 0) + COALESCE(COUNT(bs), 0)) DESC
+            ORDER BY e.interestedUsers DESC NULLS LAST, e.averageRating DESC NULLS LAST
             """)
-    List<com.eventhub.backend.dto.EventStatsDTO> findTrendingEventsWithStats(@Param("completedStatus") com.eventhub.backend.enums.EventStatus completedStatus);
+    List<Event> findTrendingEventsNative(@Param("completedStatus") com.eventhub.backend.enums.EventStatus completedStatus, org.springframework.data.domain.Pageable pageable);
 
     @Query(nativeQuery = true, value = """
             SELECT e.* FROM events e

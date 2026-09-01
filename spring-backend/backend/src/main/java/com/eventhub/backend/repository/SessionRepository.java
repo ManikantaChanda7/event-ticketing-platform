@@ -20,6 +20,13 @@ public interface SessionRepository
         })
         List<Session> findByEvent(Event event);
 
+        @EntityGraph(attributePaths = {
+                        "tickets",
+                        "event"
+        })
+        @Query("SELECT s FROM Session s")
+        List<Session> findAllWithTickets();
+
         long countByEvent(Event event);
 
         boolean existsByEventAndDateAndStartTime(

@@ -32,6 +32,10 @@ import ProtectedRoute from "./protectedRoutes/protectedRoute";
 import ScrollToTop from "./protectedRoutes/scrollToTop";
 import { fetchUserProfile } from "./redux/slices/authSlice";
 import theme from "./theme/theme";
+import {
+  initializeTokenRefresh,
+  clearRefreshSchedule,
+} from "./utils/tokenRefresh";
 function App() {
   const location = useLocation();
   const dispatch = useDispatch();
@@ -93,10 +97,19 @@ function App() {
     location.pathname.includes("/sessions");
 
   useEffect(() => {
-    if (localStorage.getItem("accessToken")) {
+    const accessToken = localStorage.getItem("accessToken");
+
+    if (accessToken) {
       dispatch(fetchUserProfile());
+      // ✅ Initialize proactive token refresh
+      initializeTokenRefresh();
     }
-  }, []);
+
+    // Cleanup on unmount
+    return () => {
+      clearRefreshSchedule();
+    };
+  }, [dispatch]);
   return (
     <>
       <ToastProvider>

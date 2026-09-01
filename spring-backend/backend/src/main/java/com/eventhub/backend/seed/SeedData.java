@@ -41,19 +41,121 @@ public class SeedData implements CommandLineRunner {
 
     // Image pools (using placeholder URLs - replace with actual Cloudinary URLs)
     private static final String[] BANNER_IMAGES = {
-            "https://res.cloudinary.com/dwzmsvp7f/image/upload/f_auto,w_1280/c_crop,g_custom/v1754982826/vilaasv0gvddvoxtibuf.png",
-            "https://res.cloudinary.com/dwzmsvp7f/image/upload/f_auto,w_1280/c_crop,g_custom/v1756293972/pjizc69iyi7uuianqkvg.jpg",
-            "https://res.cloudinary.com/dwzmsvp7f/image/upload/f_auto,w_1280/c_crop,g_custom/v1755504411/k7qag8tlilih20xlto5c.jpg",
-            "https://res.cloudinary.com/dwzmsvp7f/image/upload/f_auto,w_1280/c_crop,g_custom/v1754371118/jub74bw6cc99zqe9rg49.jpg",
-            "https://res.cloudinary.com/dwzmsvp7f/image/upload/f_auto,w_1280/c_crop,g_custom/v1748859911/ad5ql06hb51m6zswqbp9.png",
+            "https://res.cloudinary.com/dgrpyrxrn/image/upload/v1764358450/events/sw4dk82igz96lo08kjik.jpg",
+            "https://res.cloudinary.com/dgrpyrxrn/image/upload/v1764358465/events/r2qf2esjweclw3orj24h.jpg",
+            "https://res.cloudinary.com/dgrpyrxrn/image/upload/v1764358577/events/lx0jlz6wf19caz5zq8jw.jpg",
+            "https://res.cloudinary.com/dgrpyrxrn/image/upload/v1762673015/events/uzf5ykcpr3gwy93invu1.jpg",
+            "https://res.cloudinary.com/dgrpyrxrn/image/upload/v1788247070/rdovjl5t9yah8wyhjbd6_duyyyv.jpg"
     };
 
     private static final String[] THUMBNAIL_IMAGES = {
-            "https://media.insider.in/image/upload/c_crop,g_custom/v1756455254/iquljstfxkgepi8s18pk.jpg",
-            "https://media.insider.in/image/upload/c_crop,g_custom/v1755504163/ovj5vbqwrkhpgwuxuot7.png",
-            "https://media.insider.in/image/upload/c_crop,g_custom/v1755754372/arhhmtdu5jfwd0p7ltea.jpg",
-            "https://media.insider.in/image/upload/c_crop,g_custom/v1754319439/gjzedwmrxfdboi45secc.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757756214/iuiflkqpe4l8hazie0dv.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1756886339/udwsn8zsnzebfn0viq9o.jpg",
             "https://media.insider.in/image/upload/c_crop,g_custom/v1753269077/hlxlycj5weawbwgtu9ku.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1753952045/lbwumjip6z5s91nn3hsu.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757415532/oks9ckfcntuudvakxiw5.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1756887171/tyavdj29mm3hdtcle7y6.png",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1750449286/tjli9nctsqmef6d2q1gt.png",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1756110944/k4v176evbapoutmf3q5t.png",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1752427986/aqnrirnkp8yxwnjxatfa.png",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1753775866/iexwafvevzjg4wlvg8dm.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757753677/eb8ghgkfwxn5k8n2rwbe.png",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1755927576/poqk6cx9ojccxa3d0l3d.png",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757302023/sykymhhzd1cf2yqba2eh.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757826850/apte7xd5pvdt9impmroj.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1755003926/aydchg46fnutxrux4v9u.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1755170212/ha3sy5xao8ryc3ndjqjf.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1755518637/ailke6ywntn6e2z5bh1h.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1758198451/iv1pb8upq7ochnuwyisc.png",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1754319439/gjzedwmrxfdboi45secc.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1753602975/oeapeqrbhczxpowgsyie.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757017632/ugdr6kynuetnhyijxn6j.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1756985711/lijx7b7oglhivbcfauvj.png",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1756987926/pr7s3fjv1w5trer0szf2.png",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757017450/gyonfmmhkj8j3k4ysxol.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1748867860/hwttmqwqohqaenu8gdui.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757500877/kamrp7o4jktxdvrgcdav.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757315858/iapbabyqyelsudt52myu.png",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1753875069/lsg8rbnnoueha90oimma.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1754047645/av0lbalb68xudg9zyri3.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757229923/bv2zruvlquebqgb1xavi.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1758096255/scm03kslveqayywiiyry.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757608305/yc9wzt6439dnhf68f4di.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757768632/edyyn1apqz1se9bxw2zq.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757230655/rmeyoincw81xksoith48.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757868601/plhvv4nnubb8askey1lk.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1756789034/b7grxisnifmudpq8keyo.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1744713264/zuekrtlbgwhsoecsrogh.png",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1756298976/azaieah37fca0jr8pujd.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757230561/ntlgjunedcljttragzvn.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757229973/ah6wldxqb02caojvot5z.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757324953/fw98n6zsegrfsy9flqbx.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1744029211/ewqhlivlbo7fnmfnjipv.png",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757229849/rqws7chvyd2oif408ha1.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757005182/of4qdz6ts6kllxyp20dn.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1755583975/i2jrubtjjelqzouw7tk7.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1755491134/hgclnn1vhccfexg3zicr.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1748859931/dljaxi11jlhpynilsa37.png",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757180437/avrljdszipyamfu3vhgg.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1758274925/n00n1on4pxntyzpxs63o.png",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1756102753/r4zlbjozh0wbjigob3pm.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1756730403/xzy3byovt0a531omoy7w.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1758285885/dnutxnbc3mezigodhzvx.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757230717/dnurs0hyog4kj8qmjma9.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1758031120/gf7dbgoxvvb2blzbrqpj.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757493457/sy0steor6e6wakastpwe.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757155694/dmmvrrg0trbo3fkslkcz.png",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757426064/vjctihndku4w5ytmzvmv.png",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757230345/dnlv4xcppqoofy6j5bd6.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757408872/domrvqzmuk1py1ji3qkw.png",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757504539/pnuozfxgw9m04swbwypr.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757151138/ukzd2iix7pzqpuy7ka6f.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1756963991/kf0ihotmukpfdobpgafh.png",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757326320/rpkdszlzjs0cth0vdq64.png",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757487536/jrmhl3w5qac5bxbmgjwp.png",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1758266778/nafzdx9v5qswwvnvi0do.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1755790589/vniwfzyzsdtje9epg939.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1758219313/azwzcftlgicuwenhljej.png",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757528564/rdybk9lxxkjnopr5n6uu.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1754899053/i4qvf1kjwsidtsdnjqke.png",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1755336167/mxvimd3fy0jernzyb7qq.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757956098/ld4mumddi1sngslznizi.png",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1753515141/ioutwp76g1mpubg6d1ki.png",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757476349/sbhpyo7o2msduc6jkfko.png",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757133280/efybcz6c4nzcrscbww3f.png",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757446746/f0kegazwltyy9cxedr1q.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757586892/pexkx9vxrsrzogkavonv.png",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1741943906/o5piw4srw6dm00h6rh1o.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1758138401/zqcllr4uxwufsfpl87ci.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757572590/pwzcok7hsvwjm7p4bcwa.png",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1756383612/somhe5c2rbay1efuost2.png",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1758277332/ya4xnmphikagu2rw6vx8.png",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757409327/e56tyxw5zygaylosgaiu.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1741942069/xkjat9t3gxie5igsb9v5.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757503857/tk907rjlni22syceyuxs.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757940598/a4pj15jw88jxtfdou7gd.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1758280883/zu9f4nvwmjb9jptkjrhs.png",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1758291570/dpj12jzhldpqnfrskuwc.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1758201425/xj9fsl2n7cgbm8nreg78.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757582564/rx6m5xyvjc2yrvcduo7u.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757230849/tuipk5dc26gskqciyhxq.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1756973505/c4ao2tegr9wdjxszsan7.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1755337422/oz1n9xrbzjhl0kcxha7v.png",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757413126/hsihxhvgw75oz5rujl9u.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1750272202/pgppqv5xcqbzjdc6ji7s.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1755182670/jtjiwahoy9hcmyobup1g.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757304342/fswfrb3rvuowp3wfkp7m.png",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1758106626/d59mfqi4wv0iwjpybjkn.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1758055041/hmfuilkcr6zjkxwklksy.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757744030/bib7ixbknmtlqurfwur7.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757665099/dguw69grva6bycpjxpxs.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757230102/kkbuwgw46ur0pehallkw.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1758176398/jxfaw27vkggfyndwrgx8.jpg",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1754774154/mpbsphe9xaawrfkmmc2j.png",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1757309416/wwc5hghufjurw7s4mpg2.png",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1744032287/uankoaxbgdswihixypqh.png",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1752320027/zwlatvsemxliv7on5aln.png",
+            "https://media.insider.in/image/upload/c_crop,g_custom/v1756366304/dcbyzlcf4fknj7i7apjw.png"
     };
 
     private static final String[] CATEGORIES = {
@@ -101,7 +203,7 @@ public class SeedData implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) throws Exception {
-        // Uncomment below line to seed the database with sample data
+        // This intentionally resets the local/demo DB and recreates the seed dataset.
         // seedDatabase();
     }
 
@@ -185,8 +287,8 @@ public class SeedData implements CommandLineRunner {
 
     private void seedUsers(String password) {
         System.out.println("Seeding users...");
-        int totalUsers = 25000;
-        int batchSize = 100;
+        int totalUsers = 30000;
+        int batchSize = 50;
         users = new ArrayList<>();
 
         for (int i = 0; i < totalUsers; i += batchSize) {
@@ -281,7 +383,7 @@ public class SeedData implements CommandLineRunner {
         System.out.println("Seeding events...");
         events = new ArrayList<>();
         LocalDate today = LocalDate.now();
-        int totalEvents = 300;
+        int totalEvents = 2000;
 
         for (int i = 0; i < totalEvents; i++) {
             String category = randomItem(CATEGORIES);
@@ -419,40 +521,61 @@ public class SeedData implements CommandLineRunner {
 
     private void updateStartingPrices() {
         System.out.println("Updating starting prices...");
-        int totalEvents = events.size();
-        int count = 0;
-        for (Event event : events) {
-            count++;
-            if (count % 100 == 0) {
-                System.out.println("Updated prices for " + count + "/" + totalEvents + " events");
+
+        Map<Long, Double> minimumPriceByEventId = new HashMap<>();
+        List<Session> allSessions = sessionRepository.findAllWithTickets();
+
+        for (Session session : allSessions) {
+            if (session.getEvent() == null || session.getTickets() == null || session.getTickets().isEmpty()) {
+                continue;
             }
-            List<Session> eventSessions = sessionRepository.findByEvent(event);
-            double minPrice = eventSessions.stream()
-                    .flatMap(s -> s.getTickets().stream())
+
+            long eventId = session.getEvent().getId();
+            double sessionMinPrice = session.getTickets().stream()
                     .mapToDouble(Session.Ticket::getPrice)
                     .min()
                     .orElse(0.0);
-            event.setStartingPrice(minPrice);
-            eventRepository.save(event);
+
+            minimumPriceByEventId.merge(eventId, sessionMinPrice, Math::min);
         }
-        System.out.println("Starting prices updated for " + totalEvents + " events");
+
+        List<Event> eventsToUpdate = events.stream()
+                .map(event -> {
+                    double minPrice = minimumPriceByEventId.getOrDefault(event.getId(), 0.0);
+                    event.setStartingPrice(minPrice);
+                    return event;
+                })
+                .collect(Collectors.toList());
+
+        eventRepository.saveAll(eventsToUpdate);
+        System.out.println("Starting prices updated for " + eventsToUpdate.size() + " events");
     }
 
     private void updateOrganizerStats() {
         System.out.println("Updating organizer stats...");
         Map<Long, OrganizerStats> organizerStatsMap = new HashMap<>();
 
+        // Fetch all reviews in one query with event loaded
+        List<Review> allReviews = reviewRepository.findAll();
+        Map<Long, List<Review>> reviewsByEventId = allReviews.stream()
+                .collect(Collectors.groupingBy(r -> r.getEvent().getId()));
+
         for (Event event : events) {
             Long organizerId = event.getOrganizer().getId();
             OrganizerStats stats = organizerStatsMap.computeIfAbsent(organizerId, k -> new OrganizerStats());
             stats.hostedIds.add(event.getId());
 
-            List<Review> eventReviews = reviewRepository.findByEvent(event);
+            List<Review> eventReviews = reviewsByEventId.getOrDefault(event.getId(), List.of());
             for (Review review : eventReviews) {
                 stats.ratings.add((double) review.getRating());
             }
         }
 
+        // Create map of event by ID for fast lookup
+        Map<Long, Event> eventById = events.stream()
+                .collect(Collectors.toMap(Event::getId, e -> e));
+
+        List<Organizer> organizersToUpdate = new ArrayList<>();
         for (Organizer organizer : organizers) {
             OrganizerStats stats = organizerStatsMap.get(organizer.getId());
             if (stats != null) {
@@ -464,22 +587,27 @@ public class SeedData implements CommandLineRunner {
                         : 0.0;
                 organizer.setTotalReviews(totalReviews);
                 organizer.setAverageRating(avgRating);
-                Set<Event> hostedEventSet = new HashSet<>();
-                for (Long id : stats.hostedIds) {
-                    events.stream().filter(e -> e.getId().equals(id)).findFirst().ifPresent(hostedEventSet::add);
-                }
+                Set<Event> hostedEventSet = stats.hostedIds.stream()
+                        .map(eventById::get)
+                        .collect(Collectors.toSet());
                 organizer.setEventsHosted(hostedEventSet);
-                organizerRepository.save(organizer);
+                organizersToUpdate.add(organizer);
             }
         }
+
+        organizerRepository.saveAll(organizersToUpdate);
         System.out.println("Organizer stats updated");
     }
 
     private void updateUserInterests() {
         System.out.println("Updating user interests...");
         Map<Long, Integer> eventInterestCount = new HashMap<>();
+        Map<Long, Event> eventById = events.stream()
+                .collect(Collectors.toMap(Event::getId, e -> e));
+
         int totalUsers = users.size();
         int count = 0;
+        List<User> usersToUpdate = new ArrayList<>();
 
         for (User user : users) {
             count++;
@@ -496,43 +624,43 @@ public class SeedData implements CommandLineRunner {
                 k = random.nextInt(20) + 31; // 31-50
 
             List<Event> interestedEvents = randomItems(events, Math.min(k, events.size()));
-            List<Long> interestedIds = interestedEvents.stream().map(Event::getId).collect(Collectors.toList());
-
-            Set<Event> interestedEventSet = new HashSet<>();
-            for (Long id : interestedIds) {
-                events.stream().filter(e -> e.getId().equals(id)).findFirst().ifPresent(interestedEventSet::add);
-            }
-            user.setInterestedEvents(interestedEventSet);
-            userRepository.save(user);
+            user.setInterestedEvents(new HashSet<>(interestedEvents));
+            usersToUpdate.add(user);
 
             for (Event event : interestedEvents) {
                 eventInterestCount.put(event.getId(), eventInterestCount.getOrDefault(event.getId(), 0) + 1);
             }
         }
+
+        userRepository.saveAll(usersToUpdate);
         System.out.println("Processed " + totalUsers + " users");
 
         System.out.println("Updating event interest counts...");
-        int eventCount = 0;
-        for (Event event : events) {
-            event.setInterestedUsers(eventInterestCount.getOrDefault(event.getId(), 0));
-            eventRepository.save(event);
-            eventCount++;
-            if (eventCount % 500 == 0) {
-                System.out.println("Updated " + eventCount + "/" + events.size() + " events");
-            }
-        }
+        List<Event> eventsToUpdate = events.stream()
+                .map(event -> {
+                    event.setInterestedUsers(eventInterestCount.getOrDefault(event.getId(), 0));
+                    return event;
+                })
+                .collect(Collectors.toList());
+
+        eventRepository.saveAll(eventsToUpdate);
         System.out.println("User interests updated for " + totalUsers + " users and " + events.size() + " events");
     }
 
     private void seedBookings() {
         System.out.println("Seeding bookings...");
         List<Booking> bookings = new ArrayList<>();
-        int batchSize = 100;
+        int batchSize = 500;
         int bookingCount = 0;
 
         // Get all sessions
         List<Session> allSessions = sessionRepository.findAll();
         System.out.println("Found " + allSessions.size() + " sessions");
+
+        // Fetch all seats in one query with session and user loaded
+        List<Seat> allSeats = seatRepository.findAll();
+        Map<Long, List<Seat>> seatsBySessionId = allSeats.stream()
+                .collect(Collectors.groupingBy(s -> s.getSession().getId()));
 
         for (Session session : allSessions) {
             // Skip sessions that are too far in the future or too old
@@ -544,7 +672,7 @@ public class SeedData implements CommandLineRunner {
             Event event = session.getEvent();
 
             // Get seats for this session that are already booked
-            List<Seat> bookedSeats = seatRepository.findBySession(session).stream()
+            List<Seat> bookedSeats = seatsBySessionId.getOrDefault(session.getId(), List.of()).stream()
                     .filter(s -> s.getUser() != null && s.getStatus() == SeatStatus.BOOKED)
                     .collect(Collectors.toList());
 
@@ -637,13 +765,14 @@ public class SeedData implements CommandLineRunner {
             byLocationCategory.computeIfAbsent(key, k -> new ArrayList<>()).add(event);
         }
 
+        Set<Long> featuredEventIds = new HashSet<>();
+
         // Featured per location
         for (List<Event> list : byLocation.values()) {
             int featuredCount = Math.min(15, Math.max(5, (int) (list.size() * 0.1)));
             List<Event> selected = randomItems(list, featuredCount);
             for (Event event : selected) {
-                event.setIsFeatured(true);
-                eventRepository.save(event);
+                featuredEventIds.add(event.getId());
             }
         }
 
@@ -652,9 +781,23 @@ public class SeedData implements CommandLineRunner {
             int featuredCount = Math.min(4, Math.max(2, (int) (list.size() * 0.15)));
             List<Event> selected = randomItems(list, featuredCount);
             for (Event event : selected) {
-                event.setIsFeatured(true);
-                eventRepository.save(event);
+                featuredEventIds.add(event.getId());
             }
+        }
+
+        // Batch update featured events
+        List<Event> eventsToUpdate = events.stream()
+                .map(event -> {
+                    if (featuredEventIds.contains(event.getId())) {
+                        event.setIsFeatured(true);
+                    }
+                    return event;
+                })
+                .filter(Event::getIsFeatured) // only save the ones that are featured
+                .collect(Collectors.toList());
+
+        if (!eventsToUpdate.isEmpty()) {
+            eventRepository.saveAll(eventsToUpdate);
         }
         System.out.println("Featured events assigned");
     }

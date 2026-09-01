@@ -2,16 +2,20 @@
 import axios from "axios";
 import { logout } from "../redux/slices/authSlice";
 import { toastRef } from "../components/toastProvider";
+import { getApiBaseUrl } from "../config/apiConfig";
+import { performTokenRefresh, setRefreshStore } from "./tokenRefresh";
 
 let storeRef = null; // will be set from store setup
 
 export const setStore = (store) => {
   storeRef = store;
+  setRefreshStore(store);
 };
 
 // Refresh token queue/mutex to prevent multiple concurrent refresh calls
 let isRefreshing = false;
 let refreshSubscribers = [];
+let redirectInProgress = false; // Prevent multiple redirects
 
 function addRefreshSubscriber(callback) {
   refreshSubscribers.push(callback);
@@ -23,7 +27,7 @@ function onRefreshed(token) {
 }
 
 const api = axios.create({
-  baseURL: "https://event-ticketing-platform-2mmm.onrender.com/api",
+  baseURL: getApiBaseUrl(),
   headers: { "Content-Type": "application/json" },
 });
 
@@ -48,14 +52,16 @@ api.interceptors.response.use(
     // Skip toast if _skipToast is true
     const skipToast = error.config?._skipToast;
 
+    // ✅ REACTIVE: Handle token refresh when 401 received
     if (
       status === 401 &&
       !error.config?._retry &&
       localStorage.getItem("refreshToken")
     ) {
-      console.log("Token expired, attempting refresh...");
+      console.log("🔴 401 received, attempting token refresh...");
+
       if (isRefreshing) {
-        console.log("Refresh already in progress, waiting...");
+        console.log("⏳ Refresh already in progress, queuing request...");
         // Wait for the ongoing refresh to complete
         return new Promise((resolve) => {
           addRefreshSubscriber((token) => {
@@ -70,61 +76,51 @@ api.interceptors.response.use(
       error.config._retry = true;
 
       try {
-        const refreshResponse = await axios.post(
-          "http://localhost:8080/api/auth/refresh",
-          {
-            refreshToken: localStorage.getItem("refreshToken"),
-          },
-        );
+        // Use the centralized performTokenRefresh function
+        const newAccessToken = await performTokenRefresh();
 
-        console.log("Refresh response:", refreshResponse.data);
-        const newAccessToken = refreshResponse.data.data.accessToken;
-        const newRefreshToken = refreshResponse.data.data.refreshToken;
+        if (newAccessToken) {
+          console.log("✅ Token refreshed, retrying original request...");
+          api.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
+          onRefreshed(newAccessToken);
 
-        console.log("Refresh successful, updating tokens...");
-        localStorage.setItem("accessToken", newAccessToken);
-        localStorage.setItem("refreshToken", newRefreshToken);
-
-        api.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
-
-        onRefreshed(newAccessToken);
-        isRefreshing = false;
-
-        error.config.headers.Authorization = `Bearer ${newAccessToken}`;
-        console.log("Retrying original request with new token...");
-        return api(error.config);
+          error.config.headers.Authorization = `Bearer ${newAccessToken}`;
+          return api(error.config);
+        } else {
+          throw new Error("Token refresh returned no token");
+        }
       } catch (refreshError) {
-        console.error("Refresh failed:", refreshError);
+        console.error("❌ Reactive refresh failed:", refreshError);
         isRefreshing = false;
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("userId");
-        localStorage.removeItem("role");
-
-        toastRef.current?.error("Session expired. Redirecting to login...");
-        setTimeout(() => {
-          storeRef?.dispatch(logout());
-          window.location.href = "/login";
-        }, 2000);
-
+        error.config._skipLoginRedirect = true;
         return Promise.reject(error);
+      } finally {
+        isRefreshing = false;
       }
     }
 
-    /* --------------------------------------------------------------
-     🛑 1. SESSION EXPIRED ERROR (401 / 403) - Only if not a retry
+    /* ✅ FIX #1: Updated condition - skip if refresh already handled or in progress
+       🛑 1. SESSION EXPIRED ERROR (401 / 403) - Only if not a retry
     ----------------------------------------------------------------*/
-    if ((status === 401 || status === 403) && !error.config?._retry) {
-      toastRef.current?.error("Session expired. Redirecting to login...");
+    if (
+      (status === 401 || status === 403) &&
+      !error.config?._retry &&
+      !error.config?._skipLoginRedirect
+    ) {
+      // Only redirect once per session
+      if (!redirectInProgress) {
+        redirectInProgress = true;
+        toastRef.current?.error("Session expired. Redirecting to login...");
 
-      setTimeout(() => {
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("userId");
-        localStorage.removeItem("role");
-        storeRef?.dispatch(logout());
-        window.location.href = "/login";
-      }, 2000);
+        setTimeout(() => {
+          localStorage.removeItem("accessToken");
+          localStorage.removeItem("refreshToken");
+          localStorage.removeItem("userId");
+          localStorage.removeItem("role");
+          storeRef?.dispatch(logout());
+          window.location.href = "/login";
+        }, 2000);
+      }
 
       return Promise.reject(error);
     }

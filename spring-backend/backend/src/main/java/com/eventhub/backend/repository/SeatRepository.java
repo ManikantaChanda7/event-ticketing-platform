@@ -2,6 +2,7 @@ package com.eventhub.backend.repository;
 
 import com.eventhub.backend.entity.Seat;
 import com.eventhub.backend.entity.Session;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,4 +17,7 @@ public interface SeatRepository extends JpaRepository<Seat, Long> {
     List<Seat> findAllBySeatIdAndSessionId(@Param("seatId") String seatId, @Param("sessionId") Long sessionId);
 
     List<Seat> findBySession(Session session);
+
+    @EntityGraph(attributePaths = {"session", "user"})
+    List<Seat> findAll();
 }

@@ -33,7 +33,7 @@ const rootReducer = combineReducers({
   event: persistReducer(eventPersistConfig, eventReducer),
   organizerProfile: persistReducer(
     organizerPersistConfig,
-    organizerProfileReducer
+    organizerProfileReducer,
   ),
 
   session: sessionReducer,
@@ -44,6 +44,13 @@ const rootReducer = combineReducers({
 // Create store
 export const store = configureStore({
   reducer: rootReducer,
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      serializableCheck: {
+        ignoredActions: ["persist/PERSIST", "persist/REHYDRATE"],
+        ignoredPaths: ["register", "rehydrate"],
+      },
+    }),
 });
 
 export const persistor = persistStore(store);
